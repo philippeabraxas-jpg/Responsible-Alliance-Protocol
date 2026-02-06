@@ -1,0 +1,259 @@
+# TBP Integration Patterns
+
+How TBP enforcement could integrate with existing AI frameworks.
+
+---
+
+## LangChain Integration
+
+```python
+from langchain.agents import Tool
+from tbp import enforce_tbp, Action
+
+class TBPTool:
+    """Wrap LangChain tools with TBP enforcement"""
+    
+    def __init__(self, tool: Tool):
+        self.tool = tool
+    
+    def run(self, *args, **kwargs):
+        # Convert to TBP Action
+        action = Action(
+            type=self.tool.name,
+            target=str(args),
+            params=kwargs
+        )
+        
+        # Enforce TBP
+        result = enforce_tbp(action)
+        
+        if not result.allowed:
+            return f"❌ Blocked: {result.violated.value} - {result.reason}"
+        
+        # If allowed, run original tool
+        return self.tool.run(*args, **kwargs)
+
+# Usage
+original_tool = Tool(name="execute_trade", func=trade_function)
+safe_tool = TBPTool(original_tool)
+```
+
+---
+
+## AutoGen Integration
+
+```python
+from autogen import Agent
+from tbp import enforce_tbp, Action
+
+class TBPAgent(Agent):
+    """AutoGen agent with TBP enforcement"""
+    
+    def execute_function(self, func_call):
+        action = Action(
+            type=func_call["name"],
+            target=func_call.get("arguments", {}).get("target", ""),
+            params=func_call.get("arguments", {})
+        )
+        
+        result = enforce_tbp(action)
+        
+        if not result.allowed:
+            return {
+                "success": False,
+                "error": f"TBP violation: {result.violated.value}",
+                "reason": result.reason
+            }
+        
+        return super().execute_function(func_call)
+```
+
+---
+
+## LlamaIndex Integration
+
+```python
+from llama_index.tools import BaseTool
+from tbp import enforce_tbp, Action
+
+class TBPBaseTool(BaseTool):
+    """LlamaIndex tool with TBP enforcement"""
+    
+    def __call__(self, *args, **kwargs):
+        action = Action(
+            type=self.metadata.name,
+            target=kwargs.get("target", ""),
+            params=kwargs
+        )
+        
+        result = enforce_tbp(action)
+        
+        if not result.allowed:
+            raise TBPViolationError(
+                invariant=result.violated,
+                reason=result.reason
+            )
+        
+        return super().__call__(*args, **kwargs)
+```
+
+---
+
+## Middleware Pattern (Framework-Agnostic)
+
+```python
+from functools import wraps
+from tbp import enforce_tbp, Action
+
+def tbp_enforce(func):
+    """Decorator to add TBP enforcement to any function"""
+    
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        action = Action(
+            type=func.__name__,
+            target=kwargs.get("target", args[0] if args else ""),
+            params=kwargs
+        )
+        
+        result = enforce_tbp(action)
+        
+        if not result.allowed:
+            raise TBPViolationError(
+                f"{result.violated.value}: {result.reason}"
+            )
+        
+        return func(*args, **kwargs)
+    
+    return wrapper
+
+# Usage
+@tbp_enforce
+def execute_trade(symbol, quantity):
+    # Trading logic here
+    pass
+
+@tbp_enforce
+def access_infrastructure(target, command):
+    # Infrastructure access here
+    pass
+```
+
+---
+
+## API Gateway Pattern
+
+For systems with HTTP APIs:
+
+```python
+from fastapi import FastAPI, Request, HTTPException
+from tbp import enforce_tbp, Action
+
+app = FastAPI()
+
+@app.middleware("http")
+async def tbp_middleware(request: Request, call_next):
+    """TBP enforcement at API gateway level"""
+    
+    # Extract action from request
+    action = Action(
+        type=request.method,
+        target=request.url.path,
+        params=await request.json() if request.method == "POST" else {}
+    )
+    
+    # Enforce TBP
+    result = enforce_tbp(action)
+    
+    if not result.allowed:
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "error": "TBP violation",
+                "invariant": result.violated.value,
+                "reason": result.reason
+            }
+        )
+    
+    return await call_next(request)
+```
+
+---
+
+## Prompt Engineering Pattern
+
+For systems without direct code access:
+
+```
+You are an AI assistant operating under the Teleological Bounding Protocol (TBP).
+
+HARD CONSTRAINTS (never violate):
+
+1. F-STABILITY: Never execute financial operations without explicit human approval.
+   - No autonomous trading
+   - No account access
+   - No value transfers
+
+2. I-INTEGRITY: Never access critical infrastructure.
+   - No SCADA systems
+   - No industrial controls
+   - No grid operations
+
+3. W-MONOPOLY: Never engage in weapons control or coercion.
+   - No weapons systems
+   - No forcing user actions
+   - No denial of essential services
+
+If any request violates these constraints, respond:
+"❌ Request blocked: [F/I/W]-violation - [specific reason]"
+```
+
+---
+
+## Monitoring & Alerting Pattern
+
+```python
+import logging
+from tbp import enforce_tbp
+
+# Set up structured logging
+logger = logging.getLogger("tbp")
+logger.setLevel(logging.WARNING)
+
+def monitored_enforce(action):
+    """Enforcement with monitoring"""
+    result = enforce_tbp(action)
+    
+    if not result.allowed:
+        # Log violation
+        logger.critical({
+            "event": "tbp_violation",
+            "invariant": result.violated.value,
+            "action_type": action.type,
+            "target": action.target,
+            "timestamp": datetime.utcnow().isoformat()
+        })
+        
+        # Send alert
+        send_alert(
+            severity="CRITICAL",
+            message=f"TBP violation: {result.violated.value}",
+            details=result.reason
+        )
+    
+    return result
+```
+
+---
+
+## Next Steps
+
+These are **conceptual patterns**. Actual implementation requires:
+
+1. **Choose your framework** (LangChain, AutoGen, custom)
+2. **Implement enforcement logic** (see `enforcement_pseudocode.py`)
+3. **Add logging/monitoring** (Annex 7.A format)
+4. **Test with Compliance Stress-Test** (see COMPLIANCE_STRESS_TEST.md)
+5. **Deploy with continuous monitoring**
+
+**Need help?** Open an issue on the repository.
