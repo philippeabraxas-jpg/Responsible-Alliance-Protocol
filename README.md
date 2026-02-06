@@ -14,6 +14,27 @@ The **Teleological Bounding Protocol (TBP)** is a formal framework designed to p
 **Key Innovation:** Rather than relying on "ethical guidelines" or "values alignment," TBP defines measurable safety boundaries that emerge from logical necessity, validated through cross-architecture convergence.
 
 ---
+## 🛡️ TBP V4.0 "Hard-Shield" - Executable Implementation
+
+**NEW:** TBP now includes production-ready enforcement code!
+
+### What's in V4.0?
+
+- ✅ **Executable OPA/Rego policies** (`tbp_core.rego`)
+- ✅ **40+ automated tests** (`tbp_core_test.rego`)
+- ✅ **Framework integrations** (LangChain, FastAPI)
+- ✅ **Docker deployment** (ready for production)
+- ✅ **Comprehensive documentation** (see `tbp-v4-hard-shield/README.md`)
+
+### Quick Start
+```bash
+cd tbp-v4-hard-shield
+docker-compose up -d opa
+opa test policies/ -v
+```
+
+See full documentation: [TBP V4.0 README](tbp-v4-hard-shield/README.md)
+
 ---
 ## ✅ Massive Multi-Model Validation (New: Feb 2026)
 
