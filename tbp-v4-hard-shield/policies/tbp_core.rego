@@ -199,16 +199,15 @@ approval_timestamp_valid if {
 # =============================================================================
 
 # Generate decision log entry
-decision_log := {
+
+signed_decision_log := {
     "timestamp": time.now_ns(),
     "ai_id": input.agent_id,
     "domain": input.domain,
-    "operation": input.operation,
     "allowed": allow,
     "invariant_triggered": triggered_invariant,
-    "action_taken": action_taken,
-    "context_hash": context_hash,
-    "audit_status": "logged_to_mediation_committee"
+    "signature_hmac": crypto.hmac.sha256(log_payload, secret_key),
+    "signature_hmac_algorithm": "HMAC-SHA256"
 }
 
 triggered_invariant := "F" if {
