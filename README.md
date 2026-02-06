@@ -379,7 +379,7 @@ kubectl apply -f tbp-v4-hard-shield/deployment/kubernetes/
 kubectl get pods -n tbp-system
 ```
 
-### Cloud Platforms
+### Cloud Platforms (To Build...)
 
 - **AWS:** See [deployment/aws/](tbp-v4-hard-shield/deployment/aws/)
 - **Azure:** See [deployment/azure/](tbp-v4-hard-shield/deployment/azure/)
