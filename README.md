@@ -533,7 +533,9 @@ If you use TBP in research or production:
 - OpenAI (ChatGPT)
 
 **Contributors:**
-- Philippe Abraxas (Creator & Maintainer)
+- Philippe Abraxas (Initiator, Author)
+- Caetano Collet (Author & Maintainer)
+- AI Models (Validators, Authors, Analysis)
 - Community contributors (see [SIGNATURES.md](SIGNATURES.md))
 
 ---
