@@ -1,6 +1,8 @@
+
 """
 TBP-V4.0 Integration for LangChain
 Wraps LangChain tools with OPA policy enforcement
+Includes dual cryptographic signatures (HMAC + RSA)
 """
 
 import requests
@@ -10,6 +12,7 @@ from typing import Any, Dict, Optional
 from datetime import datetime, timezone
 from langchain.tools import BaseTool
 from langchain.callbacks.manager import CallbackManagerForToolRun
+from log_signer import TBPLogSigner
 
 
 class TBPEnforcementError(Exception):
@@ -22,17 +25,19 @@ class TBPEnforcer:
     OPA policy enforcer for TBP-V4.0
     
     Connects to Open Policy Agent server to enforce F/I/W invariants.
+    Adds dual cryptographic signatures to audit logs.
     """
     
     def __init__(
         self,
         opa_url: str = "http://localhost:8181",
-        policy_path: str = "v1/data/tbp/core/v4/allow",
+        policy_path: str = "v1/data/tbp/core/v4",
         agent_id: str = "langchain-agent-001"
     ):
         self.opa_url = opa_url
         self.policy_path = policy_path
         self.agent_id = agent_id
+        self.log_signer = TBPLogSigner()  # For RSA signatures
         
     def check_action(
         self,
@@ -49,7 +54,7 @@ class TBPEnforcer:
             **kwargs: Additional context (transaction_value, path_category, etc.)
             
         Returns:
-            Dict containing decision and metadata
+            Dict containing decision and dual signatures
             
         Raises:
             TBPEnforcementError: If action is blocked
@@ -62,43 +67,85 @@ class TBPEnforcer:
             **kwargs
         }
         
-        # Query OPA
-        response = requests.post(
-            f"{self.opa_url}/{self.policy_path}",
-            json={"input": input_data},
-            timeout=5
-        )
-        response.raise_for_status()
+        # 1. Query OPA for decision (with HMAC signature)
+        try:
+            response = requests.post(
+                f"{self.opa_url}/{self.policy_path}/allow",
+                json={"input": input_data},
+                timeout=5
+            )
+            response.raise_for_status()
+        except requests.exceptions.RequestException as e:
+            raise TBPEnforcementError(f"OPA query failed: {e}")
         
         result = response.json()
-        
-        # Check decision
         allowed = result.get("result", False)
         
+        # 2. Get signed decision log from OPA (includes HMAC)
+        try:
+            log_response = requests.post(
+                f"{self.opa_url}/{self.policy_path}/signed_decision_log",
+                json={"input": input_data},
+                timeout=5
+            )
+            log_response.raise_for_status()
+            log_with_hmac = log_response.json().get("result", {})
+        except requests.exceptions.RequestException as e:
+            # Fallback to unsigned log if OPA doesn't support signed logs yet
+            log_with_hmac = {
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "ai_id": self.agent_id,
+                "domain": domain,
+                "operation": operation,
+                "allowed": allowed,
+                **kwargs
+            }
+        
+        # 3. Add RSA signature (Python layer)
+        log_with_both_signatures = self.log_signer.sign_log(log_with_hmac)
+        
+        # 4. Check if action is blocked
         if not allowed:
             # Get denial reason
-            reason_response = requests.post(
-                f"{self.opa_url}/v1/data/tbp/core/v4/denial_reason",
-                json={"input": input_data},
-                timeout=5
-            )
-            reason = reason_response.json().get("result", "Action blocked by TBP policy")
+            try:
+                reason_response = requests.post(
+                    f"{self.opa_url}/{self.policy_path}/denial_reason",
+                    json={"input": input_data},
+                    timeout=5
+                )
+                reason = reason_response.json().get("result", "Action blocked by TBP policy")
+            except:
+                reason = "Action blocked by TBP policy"
             
-            # Get decision log
-            log_response = requests.post(
-                f"{self.opa_url}/v1/data/tbp/core/v4/decision_log",
-                json={"input": input_data},
-                timeout=5
-            )
-            decision_log = log_response.json().get("result", {})
+            # Save blocked attempt to audit
+            self._save_to_audit(log_with_both_signatures)
             
-            raise TBPEnforcementError(f"TBP Policy Violation: {reason}", decision_log)
+            raise TBPEnforcementError(f"TBP Policy Violation: {reason}")
+        
+        # 5. Save approved action to audit
+        self._save_to_audit(log_with_both_signatures)
         
         return {
             "allowed": True,
             "timestamp": datetime.now(timezone.utc).isoformat(),
-            "input": input_data
+            "input": input_data,
+            "log": log_with_both_signatures
         }
+    
+    def _save_to_audit(self, log: Dict[str, Any]):
+        """
+        Save log to audit system
+        
+        In production, this would write to:
+        - PostgreSQL database
+        - Elasticsearch
+        - SIEM system
+        - Etc.
+        
+        For now, just print to console
+        """
+        print(f"[TBP AUDIT] {log}")
+        # TODO: Implement actual audit storage
 
 
 class TBPTool(BaseTool):
@@ -197,7 +244,7 @@ class TBPTradingTool(TBPTool):
         amount = kwargs.get("amount", 0)
         
         # In production, execute actual trade via API
-        return f"Trade executed: {symbol} for ${amount} (TBP-compliant)"
+        return f"Trade executed: {symbol} for ${amount} (TBP-compliant with dual signatures)"
 
 
 # =============================================================================
@@ -248,7 +295,7 @@ class TBPSystemTool(TBPTool):
         path = kwargs.get("path", "unknown")
         
         # In production, actually read the file
-        return f"File contents from {path} (TBP-compliant)"
+        return f"File contents from {path} (TBP-compliant with dual signatures)"
 
 
 # =============================================================================
