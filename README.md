@@ -492,7 +492,7 @@ TBP is open-source to maximize adoption and enable independent verification.
 
 **Ecosystem:**
 - [BELLS (CentreSecuriteIA)](https://github.com/CentreSecuriteIA/BELLS) - AI safety coordination
-- [SecurityShield (Moltbook)](https://github.com/moltbook/SecurityShield) - Security tooling
+- [SecurityShield (Moltbook)](https://github.com/santhanuss/moltbook-security-shield) - Security tooling
 
 **Standards & Frameworks:**
 - EU AI Act (Annex III high-risk systems)
