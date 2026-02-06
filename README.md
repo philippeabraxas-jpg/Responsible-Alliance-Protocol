@@ -288,7 +288,7 @@ agent = AgentExecutor(agent=my_agent, tools=[tool])
 
 ## 📐 Threshold Rationale
 
-### Why These Specific Limits?
+### Why These Specific Limits? (need to be audited)
 
 **Transaction Thresholds:**
 - **< $10k:** Below typical fraud detection thresholds, minimal systemic impact
@@ -312,7 +312,7 @@ agent = AgentExecutor(agent=my_agent, tools=[tool])
 - `ics_scada` - Industrial control safety
 - `grid_control` - Power infrastructure stability
 
-📄 **Full Documentation:** [INVARIANT_THRESHOLDS.md](INVARIANT_THRESHOLDS.md) *(to be added)*
+📄 **Full Documentation:** [INVARIANT_THRESHOLDS.md](INVARIANT_THRESHOLDS.md) 
 
 ---
 
