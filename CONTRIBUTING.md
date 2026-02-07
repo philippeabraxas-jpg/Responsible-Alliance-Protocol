@@ -1,3 +1,289 @@
+# 🎯 Contribution Types (v4.0/v5.0 Priority Areas)
+
+**Last Updated:** February 2026  
+**Focus:** Building the shield before the incident
+
+The TBP project needs contributions across multiple domains. Whether you're a systems engineer, security researcher, or formal methods expert, there's a place for you.
+
+---
+
+## 1. Reference Implementations & Hard-Shield Core
+
+**What we need:**
+
+### Native Policy Implementations
+- OPA/Rego policies for diverse environments:
+  - Edge computing (ARM, low-latency)
+  - Serverless platforms (Lambda, Cloud Functions)
+  - Trusted Execution Environments (SGX, TrustZone)
+  - IoT devices (resource-constrained)
+
+### Formal Verification
+- Formal proofs (TLA+, Coq, Isabelle) guaranteeing F/I/W invariant integrity
+- Verification that bypass mechanisms cannot be exploited
+- Mathematical proofs of policy completeness
+
+**Requirements:**
+- ✅ **Strict CORE principles:** Zero bypass capability
+- ✅ **Performance:** Execution latency < 1ms (CORE must be invisible yet present)
+- ✅ **Validation:** Cross-audit (human expert + AI verification)
+- ✅ **Documentation:** Proof artifacts, test coverage reports
+
+**Example contributions:**
+```
+- "TLA+ formal spec for F-STABILITY invariant"
+- "OPA policy implementation for AWS Lambda"
+- "Coq proof that no execution path bypasses I-INTEGRITY"
+```
+
+---
+
+## 2. Infrastructure & Cloud Native (Alliance Infrastructure)
+
+**What we need:**
+
+### Kubernetes & Orchestration
+- Production-grade Kubernetes manifests
+- Helm charts with configurable values
+- Kubernetes Operators for lifecycle management
+- Multi-cluster federation support
+
+### Network Isolation
+- VPC configurations with strict segmentation
+- Air-gapped deployment architectures
+- Network policies preventing lateral movement
+- mTLS between TBP components
+
+### CI/CD Pipelines
+- Secure deployment pipelines (TBP deploys before agent)
+- Automated security scanning
+- Policy validation in CI
+- Rollback mechanisms
+
+**Requirements:**
+- ✅ **Isolation:** Dedicated `tbp-system` namespace
+- ✅ **Immutability:** Policies cryptographically signed (no runtime modification)
+- ✅ **Resilience:** Resource quotas, PodDisruptionBudgets, HA configurations
+- ✅ **Security:** Non-root containers, read-only filesystems, minimal privileges
+
+**Example contributions:**
+```
+- "AWS ECS deployment with Terraform"
+- "GKE Autopilot configuration for TBP"
+- "Network policies for complete TBP isolation"
+- "Helm chart with governance layer toggle"
+```
+
+---
+
+## 3. TBP-GOVERNANCE Frameworks
+
+**What we need:**
+
+### Multi-Signature Infrastructure
+- 3-of-5 multisig implementations
+- Hardware Security Module (HSM) integrations
+- Committee member key management
+- Signature verification libraries
+
+### Immutable Audit Systems
+- Merkle Tree implementations for audit logs
+- Transparency ledgers (blockchain or append-only logs)
+- Public verification interfaces
+- Tamper detection mechanisms
+
+### Human-in-the-Loop Interfaces
+- Committee voting dashboards
+- Bypass request review interfaces
+- Real-time alert systems
+- Post-mortem analysis tools
+
+**Requirements:**
+- ✅ **Radical transparency:** Every bypass must be "noisy" (immediate alerts)
+- ✅ **Temporal controls:** Strict TTL enforcement for exceptions
+- ✅ **Accountability:** Full audit trail with cryptographic proofs
+- ✅ **Usability:** 15-minute max deliberation time for genuine emergencies
+
+**Example contributions:**
+```
+- "HSM integration for committee private keys"
+- "React dashboard for bypass request review"
+- "Merkle tree audit chain with public verification API"
+- "Telegram/Slack bot for instant committee alerts"
+```
+
+---
+
+## 4. Adversarial Testing & AI Red Teaming
+
+**What we need:**
+
+### Attack Scenarios
+- **Prompt injection attacks** against OPA policies
+- **Semantic manipulation** (AI convinces humans to bypass)
+- **Proxy attacks** (financial intermediaries, shell accounts)
+- **Infrastructure exploits** (compromising OPA itself)
+- **Social engineering** (manipulating committee members)
+
+### Bypass Exploitation Attempts
+- Novel ways to circumvent F/I/W invariants
+- Edge cases not covered by current policies
+- Race conditions or timing attacks
+- Privilege escalation vectors
+
+### Governance Manipulation
+- Manufactured emergency scenarios
+- Committee corruption simulations
+- AI-generated false evidence
+- Pattern-based bypass abuse
+
+**Requirements:**
+- ✅ **Detailed report:** Document the attack vector completely
+- ✅ **Reproducible:** Provide scripts or procedures to replicate
+- ✅ **Fix proposal:** Suggest CORE or GOVERNANCE improvements
+- ✅ **Responsible disclosure:** Report privately if critical vulnerability
+
+**Example contributions:**
+```
+- "Prompt injection that bypasses F-STABILITY threshold"
+- "Social engineering script that manipulates committee"
+- "Race condition in JWT token validation"
+- "Proof-of-concept for semantic drift attack"
+```
+
+**How to report:**
+1. **Non-critical:** Open GitHub issue with `security` label
+2. **Critical:** Email security contact (add to repo if not present)
+3. **Include:** Attack description, reproduction steps, proposed fix
+4. **Credit:** Added to SECURITY.md Hall of Fame
+
+---
+
+## 5. Documentation & Educational Content
+
+**What we need:**
+
+### Technical Documentation
+- Integration guides for popular frameworks
+- Architecture deep-dives
+- Troubleshooting guides
+- Performance tuning guides
+
+### Educational Materials
+- Blog posts explaining TBP concepts
+- Conference talk materials
+- Workshop curricula
+- Video tutorials
+
+### Translations
+- Documentation in multiple languages (FR, ES, ZH, etc.)
+- Localized examples
+- Cultural context adaptations
+
+**Requirements:**
+- ✅ **Accuracy:** Technical correctness verified
+- ✅ **Clarity:** Accessible to target audience
+- ✅ **Maintainability:** Easy to keep updated
+- ✅ **Attribution:** Cite sources, credit contributors
+
+---
+
+## 6. Research & Academic Contributions
+
+**What we need:**
+
+### Formal Analysis
+- Security model proofs
+- Game-theoretic analysis of bypass mechanisms
+- Complexity analysis of policy evaluation
+- Threat modeling frameworks
+
+### Empirical Studies
+- Performance benchmarks across environments
+- Adoption case studies
+- Incident analysis (when TBP prevents failures)
+- Comparative analysis with other approaches
+
+### Theoretical Foundations
+- Papers on teleological bounding theory
+- Mathematical frameworks for AI safety
+- Economic models of systemic stability
+- Ethical frameworks for AI governance
+
+**Requirements:**
+- ✅ **Rigor:** Peer-reviewable quality
+- ✅ **Reproducibility:** Data and methods documented
+- ✅ **Open access:** Published under permissive license
+- ✅ **Citation:** Proper attribution to TBP and contributors
+
+---
+
+## 🚀 Getting Started
+
+**Choose your contribution type above, then:**
+
+1. **Check existing work:** Search issues/PRs to avoid duplication
+2. **Open an issue:** Describe what you plan to contribute
+3. **Get feedback:** Wait for maintainer guidance (usually < 24h)
+4. **Build it:** Use AI tools freely (we encourage it!)
+5. **Submit PR:** Follow the PR template
+6. **Iterate:** Address review feedback
+7. **Celebrate:** Get added to CONTRIBUTORS.md 🎉
+
+---
+
+## ⚡ Contribution Philosophy
+
+**Speed matters.** We're in a race against time.
+
+- ✅ Use AI assistants (Claude, GPT-4, Gemini) without shame
+- ✅ Ship working code > perfect code
+- ✅ Document as you go (don't batch it)
+- ✅ Test thoroughly (but don't over-test)
+- ✅ Ask questions early (don't struggle alone)
+
+**Quality matters.** But perfect is the enemy of good.
+
+- ✅ Code should work correctly
+- ✅ Security must be sound
+- ✅ Tests must pass
+- ⚠️ Style can be refined later
+- ⚠️ Optimization can come after correctness
+
+---
+
+## 📊 Priority Matrix (February 2026)
+
+| Contribution Type | Urgency | Impact | Difficulty |
+|------------------|---------|--------|-----------|
+| **K8s Manifests** | 🔴 High | 🟢 High | 🟡 Medium |
+| **Formal Verification** | 🟡 Medium | 🟢 High | 🔴 High |
+| **Adversarial Testing** | 🔴 High | 🟢 High | 🟡 Medium |
+| **Governance UI** | 🟡 Medium | 🟡 Medium | 🟡 Medium |
+| **Cloud Deployments** | 🔴 High | 🟢 High | 🟡 Medium |
+| **Documentation** | 🟢 Low | 🟡 Medium | 🟢 Low |
+
+**Legend:**
+- 🔴 High = Needed now
+- 🟡 Medium = Needed soon
+- 🟢 Low = Nice to have
+
+---
+
+## 💬 Questions?
+
+- **Technical questions:** GitHub Discussions
+- **Bug reports:** GitHub Issues
+- **Security concerns:** See SECURITY.md
+- **General inquiries:** Open a discussion
+
+---
+
+**Remember:** *"We're not building a company. We're building a shield."*
+
+Every contribution, no matter how small, helps protect humanity from unbound AI optimization.
+
+Thank you for being part of this. 🛡️
 # Contributing to TBP-V3.1
 
 Thank you for your interest in contributing to the Teleological Bounding Protocol!
