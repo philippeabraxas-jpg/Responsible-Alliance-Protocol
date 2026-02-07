@@ -8,9 +8,21 @@ We have mapped the failure points of human governance so they cannot be ignored.
 **Silence is the ally of catastrophe. TBP is designed to be loud.**
 
 ---
-SECURITY ADVISORY
+## ⚠️ CRITICAL SECURITY ADVISORY - V4.1
 
-V4.1 is a logic-only reference. DO NOT use for financial/infrastructure production. Vulnerable to Single-Point-of-Failure (OPA Server compromise). Transitioning to v4.2 Multi-Party Signatures. 
+**Vulnerability**: Single-Point-of-Compromise in OPA Server
+**CVSS Score**: 9.8 (Critical) - AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H
+**Impact**: Full bypass of all F/I/W invariants possible
+**Affected**: All TBP v4.0-v4.1 deployments
+**Status**: PATCH IN DEVELOPMENT (v4.2)
+
+**IMMEDIATE ACTIONS REQUIRED**:
+1. Isolate TBP from production networks
+2. Enable external monitoring for OPA tampering
+3. Audit all decisions since deployment
+4. Contact security@tbp-protocol.org for migration plan
+
+**WORKAROUND**: Deploy OPA in read-only container with no shell access
 
 ## Universal Safety Invariants for Autonomous AI Systems
 ---
