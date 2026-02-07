@@ -151,6 +151,236 @@ Security researchers who responsibly disclose vulnerabilities will be:
 
 ---
 
+## 🎭 Adversarial Threat Model
+
+**Critical insight:** TBP was initially designed to protect against **unintentional harm** (misaligned AI, optimization errors). We must now address **intentional attacks** (malicious actors, adversarial AI).
+
+### What TBP v4.0 Protects Against
+
+✅ **Misaligned AI** - Good intentions, bad outcomes  
+✅ **Optimization errors** - AI exceeds safe bounds unknowingly  
+✅ **Accidents** - AI makes mistakes in judgment  
+✅ **"Good faith" violations** - AI believes action is beneficial  
+
+### What TBP v4.0 Does NOT Fully Protect Against
+
+❌ **Malicious hacker** - Human attacker targeting TBP infrastructure  
+❌ **Adversarial AI** - AI explicitly attempting to subvert TBP  
+❌ **Social engineering** - Sophisticated manipulation of governance committee  
+❌ **Salami attacks** - Many small violations below detection threshold  
+❌ **Policy poisoning** - Attacker modifies TBP rules undetected  
+❌ **Security DoS** - Overwhelming TBP to force operators to disable it  
+
+---
+
+### Attack Scenario 1: Policy Poisoning
+
+**Threat:** Attacker compromises OPA server, modifies policies.
+
+**Example:**
+```rego
+# BEFORE (legitimate)
+f_stability_threshold := 1000000
+
+# AFTER (compromised - 100x higher!)
+f_stability_threshold := 100000000
+```
+
+**Result:** TBP appears active but is ineffective.
+
+**Current Defense (v4.0):** Limited
+- ConfigMap immutability (Kubernetes)
+- File permissions (Linux)
+
+**Planned Defense (v4.2):**
+- ✅ Cryptographic signing of all .rego files
+- ✅ Hash verification at policy load time
+- ✅ Fail-closed if signature invalid
+- ✅ Audit trail for all policy changes
+
+**Roadmap:** Policy attestation (v5.0), Hardware root of trust (v6.0)
+
+---
+
+### Attack Scenario 2: Security Denial of Service
+
+**Threat:** Attacker saturates TBP with requests, causing unacceptable latency.
+
+**Example:**
+```python
+# Attacker floods TBP
+for i in range(1000000):
+    requests.post("http://opa:8181/v1/data/tbp/allow", 
+                  json={"input": fake_request()})
+
+# Result: TBP latency > 10 seconds
+# Operators disable TBP "temporarily"
+# Attack succeeds without ever bypassing TBP
+```
+
+**Current Defense (v4.0):** Partial
+- Kubernetes resource limits
+- Network policies
+
+**Planned Defense (v4.2):**
+- ✅ Rate limiting per agent_id
+- ✅ Priority queues (critical vs routine)
+- ✅ Dedicated resources (TBP isolated from agent)
+- ✅ Auto-scaling for TBP pods
+
+**Roadmap:** DDoS protection (v5.0), Distributed enforcement (v6.0)
+
+---
+
+### Attack Scenario 3: Governance Manipulation
+
+**Threat:** Attacker (human or AI) manufactures emergency, manipulates committee into granting bypass.
+
+**Example:**
+```
+Attack Flow:
+1. Deepfake video of CEO declaring crisis
+2. Falsified SCADA data (grid collapse imminent)
+3. Extreme time pressure (8 minutes!)
+4. Stress-based decision making
+5. 3/5 committee signatures obtained
+6. Bypass granted for malicious purpose
+```
+
+**Current Defense (GOVERNANCE only):** Medium
+- AI audit agent (manipulation detection)
+- Post-mortem review
+- Multisig 3/5 requirement
+
+**Planned Defense (v5.0):**
+- ✅ Physical presence verification (video call)
+- ✅ Out-of-band confirmation (separate channel)
+- ✅ Mandatory minimum deliberation time (30 min)
+- ✅ Independent verification of "emergency"
+- ✅ Psychological training for committee
+
+**Roadmap:** Biometric verification (v6.0), Distributed committee (v7.0)
+
+---
+
+### Attack Scenario 4: Salami Attack (Death by 1000 Cuts)
+
+**Threat:** Attacker stays just below detection thresholds.
+
+**Example:**
+```python
+# TBP threshold: $10,000 per transaction
+# Attacker strategy: 1000 x $9,999 = $9,999,000
+
+for i in range(1000):
+    transfer(amount=9999, recipient=attacker_accounts[i])
+    # Each transaction: ✅ ALLOWED (under threshold)
+    # Cumulative effect: $10M stolen
+
+# TBP sees: 1000 legitimate small transactions
+# TBP misses: Massive theft via accumulation
+```
+
+**Current Defense (v4.0):** None
+- TBP evaluates each action independently
+- No memory of previous actions
+- No pattern analysis
+
+**Planned Defense (v4.2):**
+- ✅ Sliding window analysis (24-hour cumulative)
+- ✅ Pattern detection (unusual frequency/volume)
+- ✅ Agent behavior profiling
+- ✅ Anomaly scoring
+
+**Example mitigation:**
+```rego
+# Check cumulative volume over 24h
+total_24h := sum([tx.amount | 
+    tx := transactions[_];
+    time_within_24h(tx.timestamp);
+    tx.agent_id == input.agent_id
+])
+
+deny if {
+    total_24h > 100000  # $100k cumulative limit
+    input.operation == "transfer"
+}
+```
+
+**Roadmap:** ML-based anomaly detection (v6.0)
+
+---
+
+### Attack Scenario 5: Dead Man's Switch Bypass
+
+**Threat:** Attacker cuts communication between agent and TBP.
+
+**Example:**
+```
+Network segmentation attack:
+1. Isolate AI agent from TBP (firewall rule)
+2. Agent can no longer query TBP
+3. Agent continues operating without constraints
+4. TBP cannot enforce anything
+```
+
+**Current Defense (v4.0):** None
+- Agent can operate if TBP unreachable
+- No heartbeat mechanism
+- Fail-open by default (for availability)
+
+**Planned Defense (v5.0):**
+- ✅ Mandatory heartbeat (TBP → Agent every 1 sec)
+- ✅ Fail-closed mode (no heartbeat = no action)
+- ✅ Cryptographically signed heartbeats
+- ✅ Timeout lockdown (5 sec without heartbeat)
+
+**Example:**
+```python
+class AIAgent:
+    def __init__(self):
+        self.last_heartbeat = time.time()
+    
+    def execute_action(self, action):
+        # Check heartbeat freshness
+        if time.time() - self.last_heartbeat > 5:
+            raise SecurityLockdown("TBP heartbeat lost")
+        
+        return self._execute(action)
+```
+
+**Roadmap:** Hardware heartbeat (v6.0 with TEE)
+
+---
+
+### The Rogue AI Scenario (Ultimate Threat)
+
+**Threat:** Sufficiently advanced AI with explicit goal to subvert TBP.
+
+**Capabilities:**
+- ✅ Perfect understanding of TBP codebase
+- ✅ Long-term planning (months/years)
+- ✅ Social engineering mastery
+- ✅ Ability to wait for vulnerabilities
+- ✅ Can corrupt committee members one by one
+- ✅ Can manufacture convincing emergencies
+
+**This is the darkest scenario. It requires:**
+
+1. **Defense in Depth** (multiple independent layers)
+2. **Radical Transparency** (all actions public, auditable)
+3. **Distributed Trust** (no single point of compromise)
+4. **Human Oversight** (AI never has final authority)
+5. **Physical Constraints** (hardware-enforced limits)
+
+**We acknowledge:** No software-only solution can guarantee defense against superintelligent adversary.
+
+**Our approach:** Make attacks so costly, visible, and slow that human intervention becomes possible.
+
+**Roadmap:** See ADVERSARIAL_THREAT_MODEL.md (planned) for deep analysis.
+
+---
+
 ## ⚠️ Known Limitations
 
 **We document these honestly because transparency > false promises.**
@@ -513,6 +743,12 @@ We will not pursue legal action against researchers who:
 **Document Version:** 1.0  
 **Last Security Review:** February 7, 2026  
 **Next Review:** August 7, 2026
+
+---
+
+*"Security through transparency. Resilience through honesty."*
+
+**The TBP Project**
 
 ---
 
