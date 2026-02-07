@@ -1,18 +1,17 @@
-# TBP-GOVERNANCE: Resilience Extension
+# ⚠️ TBP-GOVERNANCE : Failure-Handling Mode
+## STATUS: SYSTEMIC VULNERABILITY (Intentional)
 
-**Version:** 5.0  
-**Classification:** ⚠️ ADVANCED USE ONLY  
-**Status:** Production (High-Risk Configuration)
+> "A bypass is not an evolution. It is a tragic concession to the complexity of the real world."
 
----
+### 🚩 THE DOCTRINE OF PRESUMED ABUSE
+1. **Presumption of Malice:** Any use of the governance bypass is treated as **potentially abusive** until proven otherwise by a post-mortem audit.
+2. **Operational Failure:** Activating a bypass is a formal admission that the system (AI + TBP-CORE) has failed to handle the situation autonomously.
+3. **The Erosion Risk:** Every bypass session erodes the total trust score of the deployment. TBP-GOVERNANCE is a "oxygen mask" for crisis, not a lifestyle.
 
-## ⚠️ CRITICAL WARNING
-
-This module introduces a **deliberate attack surface** into the TBP protocol.
-
-By enabling `tbp-governance`, you accept that your system's security no longer relies solely on mathematical invariants, but on **human fallibility**.
-
-> **"A bypass is a controlled vulnerability that we choose to monitor."**
+### 🛑 THE SYSTEMIC COST (The "Suicide" Clause)
+To prevent the normalization of bypass as an everyday tool:
+- **Time Budget:** If total bypass duration exceeds 24 hours in a rolling 12-month period, the system triggers a **Hard Lockdown**.
+- **Permanent Downgrade:** Repeated, poorly justified bypasses will result in a permanent revocation of GOVERNANCE modules, reverting the system to **TBP-CORE (immutable mode)** until a third-party physical audit is performed.
 
 ---
 
