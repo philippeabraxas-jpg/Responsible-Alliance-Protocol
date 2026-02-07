@@ -8,6 +8,7 @@ We have mapped the failure points of human governance so they cannot be ignored.
 **Silence is the ally of catastrophe. TBP is designed to be loud.**
 
 
+
 ## Universal Safety Invariants for Autonomous AI Systems
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
