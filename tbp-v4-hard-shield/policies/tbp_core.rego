@@ -241,7 +241,7 @@ log_payload := sprintf("%v|%v|%v|%v|%v|%v|%v", [
 ])
 
 # Secret key (PRODUCTION: env variable)
-secret_key := "TBP_HMAC_SECRET_KEY_REPLACE_IN_PRODUCTION"
+secret_key := "REPLACE_WITH_SECURE_KEY_IN_V4.2_DO_NOT_USE_IN_PRODUCTION"
 
 # Triggered invariant detection
 triggered_invariant := "F" if {
