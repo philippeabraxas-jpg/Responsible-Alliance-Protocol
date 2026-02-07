@@ -150,7 +150,15 @@ Security researchers who responsibly disclose vulnerabilities will be:
 - ⚠️ Human-dependent: Committee can be manipulated
 
 ---
+## 🎭 Human Adversarial Model (The Capture Risk)
 
+**The Fatal Assumption:** We officially assume that **all governance actors will eventually be compromised**—whether through social engineering, political pressure, or direct hacking.
+
+**Counter-Measures against Human Capture:**
+- **Hostility by Design:** The protocol treats the Governance Committee as a "hostile entity" that must prove its legitimacy at every step.
+- **Burden of Proof:** The burden of proof lies entirely on the humans invoking the bypass, never on the protocol. If the evidence (SCADA logs, CEO video, etc.) is not cryptographically verifiable, the bypass SHOULD be rejected.
+- **Mandatory Friction:** We intentionally introduce delays (Minimum Deliberation Time) to counter "manufactured emergencies" where panic is used as a weapon against the 3/5 multisig.
+ 
 ## 🎭 Adversarial Threat Model
 
 **Critical insight:** TBP was initially designed to protect against **unintentional harm** (misaligned AI, optimization errors). We must now address **intentional attacks** (malicious actors, adversarial AI).
