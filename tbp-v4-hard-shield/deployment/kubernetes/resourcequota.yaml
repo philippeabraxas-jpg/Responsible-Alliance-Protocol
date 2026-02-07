@@ -1,0 +1,40 @@
+# TBP Resource Quota
+# Limits total resource consumption for the tbp-system namespace
+# Prevents resource exhaustion and ensures fair sharing
+
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: tbp-resource-quota
+  namespace: tbp-system
+  labels:
+    app.kubernetes.io/name: tbp-resource-quota
+    app.kubernetes.io/component: resource-management
+    app.kubernetes.io/part-of: tbp-system
+spec:
+  hard:
+    # CPU limits
+    requests.cpu: "1"           # Total CPU requests allowed
+    limits.cpu: "2"             # Total CPU limits allowed
+    
+    # Memory limits (sized to prevent OOM kills)
+    requests.memory: 1Gi        # Total memory requests allowed
+    limits.memory: 2Gi          # Total memory limits allowed
+    
+    # Pod count limits
+    pods: "10"                  # Maximum number of pods
+    
+    # Service limits
+    services: "5"               # Maximum number of services
+    services.loadbalancers: "0" # No external load balancers (security)
+    services.nodeports: "0"     # No NodePorts (security)
+    
+    # ConfigMap and Secret limits
+    configmaps: "10"            # Maximum ConfigMaps
+    secrets: "10"               # Maximum Secrets
+    
+    # PersistentVolumeClaim limits
+    persistentvolumeclaims: "5" # Maximum PVCs
+    
+    # Replication controller limits
+    replicationcontrollers: "5" # Maximum RCs

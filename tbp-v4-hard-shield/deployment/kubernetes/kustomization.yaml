@@ -1,0 +1,31 @@
+# TBP Kustomization
+# Allows deploying all TBP resources with: kubectl apply -k .
+# Resources are applied in dependency order
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: tbp-system
+
+# Common labels applied to all resources
+commonLabels:
+  app.kubernetes.io/managed-by: kustomize
+  app.kubernetes.io/part-of: tbp-system
+
+# Resources in dependency order
+resources:
+  # 1. Namespace must be created first
+  - namespace.yaml
+  # 2. Resource constraints for the namespace
+  - resourcequota.yaml
+  - limitrange.yaml
+  # 3. Configuration (policies)
+  - configmap-policies.yaml
+  # 4. Workloads
+  - deployment-opa.yaml
+  # 5. Networking
+  - service-opa.yaml
+  # 6. Security policies (apply last)
+  - networkpolicy-deny-all.yaml
+  - networkpolicy-allow-opa.yaml
