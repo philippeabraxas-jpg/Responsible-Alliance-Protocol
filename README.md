@@ -9,6 +9,7 @@ We have mapped the failure points of human governance so they cannot be ignored.
 
 ---
 SECURITY ADVISORY
+
 V4.1 is a logic-only reference. DO NOT use for financial/infrastructure production. Vulnerable to Single-Point-of-Failure (OPA Server compromise). Transitioning to v4.2 Multi-Party Signatures.
 ## Universal Safety Invariants for Autonomous AI Systems
 ---
