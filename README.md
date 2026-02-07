@@ -1,5 +1,11 @@
 # Teleological Bounding Protocol (TBP)
 
+## ⚖️ A Note on Imperfection
+
+TBP is intentionally incomplete. We do not promise perfect safety—we provide **systemic visibility** and **enforced accountability**. 
+
+We have mapped the failure points of human governance so they cannot be ignored. We invite experts, regulators, and developers not to "use" this tool, but to join the effort in hardening these human-machine boundaries. 
+**Silence is the ally of catastrophe. TBP is designed to be loud.**
 ## Universal Safety Invariants for Autonomous AI Systems
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
