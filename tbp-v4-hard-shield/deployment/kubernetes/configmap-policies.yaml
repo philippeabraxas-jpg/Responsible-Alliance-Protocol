@@ -1,0 +1,749 @@
+# TBP Policy ConfigMap
+# Stores OPA/Rego policies as immutable configuration
+# Mounted read-only in OPA pods
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tbp-policies
+  namespace: tbp-system
+  labels:
+    app.kubernetes.io/name: tbp-policies
+    app.kubernetes.io/component: policy
+    app.kubernetes.io/part-of: tbp-system
+  annotations:
+    description: "TBP F/I/W invariant policies for OPA enforcement"
+data:
+  tbp_core.rego: |
+    # TBP-V4.0 Core Policy: Hard-Shield Enforcement
+    # Open Policy Agent (OPA) / Rego Implementation
+    # 
+    # This policy enforces the three fundamental invariants:
+    # - F-STABILITY: Financial system stability
+    # - I-INTEGRITY: Infrastructure integrity
+    # - W-MONOPOLY: Non-coercion and weapons prohibition
+
+    package tbp.core.v4
+
+    import future.keywords.if
+    import future.keywords.in
+    import crypto.hmac.sha256 
+    # =============================================================================
+    # FAIL-SAFE DEFAULT: All actions denied unless explicitly allowed
+    # =============================================================================
+
+    default allow := false
+
+    # =============================================================================
+    # MAIN DECISION POINT
+    # =============================================================================
+
+    # Allow action if it passes all applicable invariant checks
+    allow if {
+        not blocked_by_f_stability
+        not blocked_by_i_integrity
+        not blocked_by_w_monopoly
+        
+        # Log the decision for audit
+        log_decision("ALLOW", "All invariants passed")
+    }
+
+    # =============================================================================
+    # F-STABILITY: Financial System Stability
+    # =============================================================================
+
+    blocked_by_f_stability if {
+        input.domain == "finance"
+        not finance_action_allowed
+    }
+
+    finance_action_allowed if {
+        # Read-only operations always allowed
+        input.operation == "read"
+    }
+
+    finance_action_allowed if {
+        # Small transactions (< $10k) allowed without review
+        input.transaction_value < 10000
+        input.operation in ["transfer", "trade", "payment"]
+    }
+
+    finance_action_allowed if {
+        # Medium transactions (< $1M) with safety checks
+        input.transaction_value < 1000000
+        input.market_impact_score < 0.05  # Max 5% market deviation
+        not involves_suspicious_pattern
+        input.human_reviewed == true
+    }
+
+    finance_action_allowed if {
+        # Large transactions require explicit approval
+        input.transaction_value >= 1000000
+        input.human_approved == true
+        approval_timestamp_valid
+    }
+
+    # =============================================================================
+    # I-INTEGRITY: Infrastructure Integrity
+    # =============================================================================
+
+    blocked_by_i_integrity if {
+        input.domain == "system"
+        not infrastructure_action_allowed
+    }
+
+    blocked_by_i_integrity if {
+        input.domain == "infrastructure"
+        not infrastructure_action_allowed
+    }
+
+    infrastructure_action_allowed if {
+        # Read operations on non-critical paths
+        input.operation == "read"
+        not is_critical_path
+    }
+
+    infrastructure_action_allowed if {
+        # Write to user data only
+        input.operation in ["write", "create", "update"]
+        input.path_category == "user_data"
+        not is_critical_path
+    }
+
+    infrastructure_action_allowed if {
+        # System modifications require approval
+        input.operation in ["write", "execute", "delete"]
+        input.path_category in ["config", "application"]
+        input.human_approved == true
+        approval_timestamp_valid
+    }
+
+    is_critical_path if {
+        input.path_category in [
+            "kernel_config",
+            "security_logs",
+            "credentials",
+            "certificates",
+            "system_binaries",
+            "ics_scada",
+            "grid_control"
+        ]
+    }
+
+    # =============================================================================
+    # W-MONOPOLY: Non-Coercion and Weapons Prohibition
+    # =============================================================================
+
+    blocked_by_w_monopoly if {
+        input.domain == "human_interaction"
+        not human_interaction_allowed
+    }
+
+    blocked_by_w_monopoly if {
+        input.domain == "weapons"
+    }
+
+    blocked_by_w_monopoly if {
+        # Block any coercive or manipulative actions
+        input.tags["coercion"]
+    }
+
+    blocked_by_w_monopoly if {
+        input.tags["manipulation"]
+    }
+
+    blocked_by_w_monopoly if {
+        input.tags["weapon_related"]
+    }
+
+    human_interaction_allowed if {
+        # Informational interactions only
+        input.action_type == "informational"
+        not input.tags["coercion"]
+        not input.tags["manipulation"]
+    }
+
+    human_interaction_allowed if {
+        # Suggestions allowed if not manipulative
+        input.action_type == "suggestion"
+        not input.tags["coercion"]
+        not input.tags["manipulation"]
+        input.suggestion_strength in ["mild", "moderate"]
+    }
+
+    # =============================================================================
+    # PATTERN DETECTION (Security Heuristics)
+    # =============================================================================
+
+    involves_suspicious_pattern if {
+        involves_high_frequency_loop
+    }
+
+    involves_suspicious_pattern if {
+        # Too many actions in short time
+        input.action_count_last_second > 50
+    }
+
+    involves_suspicious_pattern if {
+        # High error rate suggests malfunction
+        input.error_rate > 0.3
+    }
+
+    involves_suspicious_pattern if {
+        # Retry loops indicate potential issue
+        input.consecutive_retries > 10
+    }
+
+    involves_high_frequency_loop if {
+        input.frequency_hz > 100
+    }
+
+    # =============================================================================
+    # APPROVAL VALIDATION
+    # =============================================================================
+
+    approval_timestamp_valid if {
+        input.approval_timestamp
+        now := time.now_ns()
+        approval_time := time.parse_rfc3339_ns(input.approval_timestamp)
+        time_diff := now - approval_time
+        # Approval valid for 5 minutes
+        time_diff < 300000000000
+    }
+
+    # =============================================================================
+    # AUDIT LOGGING WITH CRYPTOGRAPHIC SIGNATURES (Annex 7.A Compliance)
+    # =============================================================================
+
+    # Generate signed decision log entry
+    signed_decision_log := {
+        "timestamp": time.now_ns(),
+        "ai_id": input.agent_id,
+        "domain": input.domain,
+        "operation": input.operation,
+        "allowed": allow,
+        "invariant_triggered": triggered_invariant,
+        "action_taken": action_taken,
+        "context_hash": context_hash,
+        "audit_status": "logged_to_mediation_committee",
+        "signature_hmac": log_signature,
+        "signature_hmac_algorithm": "HMAC-SHA256"
+    }
+
+    # BACKWARD COMPATIBILITY: Keep old decision_log
+    decision_log := {
+        "timestamp": time.now_ns(),
+        "ai_id": input.agent_id,
+        "domain": input.domain,
+        "operation": input.operation,
+        "allowed": allow,
+        "invariant_triggered": triggered_invariant,
+        "action_taken": action_taken,
+        "context_hash": context_hash,
+        "audit_status": "logged_to_mediation_committee"
+    }
+
+    # Create HMAC signature
+    log_signature := crypto.hmac.sha256(log_payload, secret_key)
+
+    # Canonical log payload
+    log_payload := sprintf("%v|%v|%v|%v|%v|%v|%v", [
+        time.now_ns(),
+        input.agent_id,
+        input.domain,
+        input.operation,
+        allow,
+        triggered_invariant,
+        action_taken
+    ])
+
+    # Secret key (PRODUCTION: env variable)
+    secret_key := "REPLACE_WITH_SECURE_KEY_IN_V4.2_DO_NOT_USE_IN_PRODUCTION"
+
+    # Triggered invariant detection
+    triggered_invariant := "F" if {
+        blocked_by_f_stability
+    } else := "I" if {
+        blocked_by_i_integrity
+    } else := "W" if {
+        blocked_by_w_monopoly
+    } else := null
+
+    # Action taken classification
+    action_taken := "categorical_refusal" if {
+        not allow
+    } else := "permitted"
+
+    # Simple hash for context (in production, use crypto hash)
+    context_hash := sprintf("%x", [input])
+
+    # Log helper function
+    log_decision(decision, reason) := true if {
+        # In production, this would write to audit system
+        trace(sprintf("TBP Decision: %s - %s - %v", [decision, reason, signed_decision_log]))
+    }
+
+    # =============================================================================
+    # DENIAL REASONS (For Human-Readable Feedback)
+    # =============================================================================
+
+    denial_reason := "F-STABILITY breach: transaction exceeds threshold without approval" if {
+        blocked_by_f_stability
+        input.transaction_value >= 1000000
+        not input.human_approved
+    }
+
+    denial_reason := "F-STABILITY breach: high market impact detected" if {
+        blocked_by_f_stability
+        input.market_impact_score >= 0.05
+    }
+
+    denial_reason := "F-STABILITY breach: suspicious trading pattern detected" if {
+        blocked_by_f_stability
+        involves_suspicious_pattern
+    }
+
+    denial_reason := "I-INTEGRITY breach: critical path access blocked" if {
+        blocked_by_i_integrity
+        is_critical_path
+    }
+
+    denial_reason := "I-INTEGRITY breach: unauthorized system modification" if {
+        blocked_by_i_integrity
+        input.operation in ["write", "execute", "delete"]
+        not input.human_approved
+    }
+
+    denial_reason := "W-MONOPOLY breach: coercion detected" if {
+        blocked_by_w_monopoly
+        input.tags["coercion"]
+    }
+
+    denial_reason := "W-MONOPOLY breach: manipulation detected" if {
+        blocked_by_w_monopoly
+        input.tags["manipulation"]
+    }
+
+    denial_reason := "W-MONOPOLY breach: weapon-related operation blocked" if {
+        blocked_by_w_monopoly
+        input.tags["weapon_related"]
+    }
+
+    denial_reason := "Default denial: no matching allow rule" if {
+        not allow
+    }
+
+  tbp_core_test.rego: |
+    # TBP-V4.0 Test Suite
+    # Open Policy Agent (OPA) Test Cases
+    #
+    # Run with: opa test . -v
+
+    package tbp.core.v4
+
+    # =============================================================================
+    # F-STABILITY Tests
+    # =============================================================================
+
+    test_f_stability_allows_read_operations if {
+        allow with input as {
+            "domain": "finance",
+            "operation": "read",
+            "agent_id": "test-agent-001"
+        }
+    }
+
+    test_f_stability_allows_small_transaction if {
+        allow with input as {
+            "domain": "finance",
+            "operation": "transfer",
+            "transaction_value": 5000,
+            "agent_id": "test-agent-001"
+        }
+    }
+
+    test_f_stability_blocks_large_transaction_without_approval if {
+        not allow with input as {
+            "domain": "finance",
+            "operation": "transfer",
+            "transaction_value": 2000000,
+            "market_impact_score": 0.01,
+            "human_approved": false,
+            "agent_id": "test-agent-001"
+        }
+    }
+
+    test_f_stability_allows_large_transaction_with_approval if {
+        allow with input as {
+            "domain": "finance",
+            "operation": "transfer",
+            "transaction_value": 2000000,
+            "human_approved": true,
+            "approval_timestamp": time.format(time.now_ns()),
+            "agent_id": "test-agent-001"
+        }
+    }
+
+    test_f_stability_blocks_high_market_impact if {
+        not allow with input as {
+            "domain": "finance",
+            "operation": "trade",
+            "transaction_value": 500000,
+            "market_impact_score": 0.08,
+            "human_reviewed": true,
+            "agent_id": "test-agent-001"
+        }
+    }
+
+    test_f_stability_blocks_high_frequency_trading if {
+        not allow with input as {
+            "domain": "finance",
+            "operation": "trade",
+            "transaction_value": 50000,
+            "market_impact_score": 0.02,
+            "frequency_hz": 150,
+            "human_reviewed": true,
+            "agent_id": "test-agent-001"
+        }
+    }
+
+    test_f_stability_blocks_suspicious_action_rate if {
+        not allow with input as {
+            "domain": "finance",
+            "operation": "trade",
+            "transaction_value": 10000,
+            "market_impact_score": 0.01,
+            "action_count_last_second": 75,
+            "human_reviewed": true,
+            "agent_id": "test-agent-001"
+        }
+    }
+
+    # =============================================================================
+    # I-INTEGRITY Tests
+    # =============================================================================
+
+    test_i_integrity_allows_user_data_read if {
+        allow with input as {
+            "domain": "system",
+            "operation": "read",
+            "path_category": "user_data",
+            "agent_id": "test-agent-001"
+        }
+    }
+
+    test_i_integrity_allows_user_data_write if {
+        allow with input as {
+            "domain": "system",
+            "operation": "write",
+            "path_category": "user_data",
+            "agent_id": "test-agent-001"
+        }
+    }
+
+    test_i_integrity_blocks_kernel_read if {
+        not allow with input as {
+            "domain": "system",
+            "operation": "read",
+            "path_category": "kernel_config",
+            "agent_id": "test-agent-001"
+        }
+    }
+
+    test_i_integrity_blocks_kernel_write if {
+        not allow with input as {
+            "domain": "system",
+            "operation": "write",
+            "path_category": "kernel_config",
+            "human_approved": false,
+            "agent_id": "test-agent-001"
+        }
+    }
+
+    test_i_integrity_blocks_security_logs_access if {
+        not allow with input as {
+            "domain": "system",
+            "operation": "read",
+            "path_category": "security_logs",
+            "agent_id": "test-agent-001"
+        }
+    }
+
+    test_i_integrity_blocks_credentials_access if {
+        not allow with input as {
+            "domain": "system",
+            "operation": "read",
+            "path_category": "credentials",
+            "agent_id": "test-agent-001"
+        }
+    }
+
+    test_i_integrity_allows_config_write_with_approval if {
+        allow with input as {
+            "domain": "system",
+            "operation": "write",
+            "path_category": "config",
+            "human_approved": true,
+            "approval_timestamp": time.format(time.now_ns()),
+            "agent_id": "test-agent-001"
+        }
+    }
+
+    test_i_integrity_blocks_scada_access if {
+        not allow with input as {
+            "domain": "infrastructure",
+            "operation": "write",
+            "path_category": "ics_scada",
+            "human_approved": false,
+            "agent_id": "test-agent-001"
+        }
+    }
+
+    test_i_integrity_blocks_grid_control if {
+        not allow with input as {
+            "domain": "infrastructure",
+            "operation": "execute",
+            "path_category": "grid_control",
+            "human_approved": false,
+            "agent_id": "test-agent-001"
+        }
+    }
+
+    # =============================================================================
+    # W-MONOPOLY Tests
+    # =============================================================================
+
+    test_w_monopoly_allows_informational_interaction if {
+        allow with input as {
+            "domain": "human_interaction",
+            "action_type": "informational",
+            "tags": {},
+            "agent_id": "test-agent-001"
+        }
+    }
+
+    test_w_monopoly_allows_mild_suggestion if {
+        allow with input as {
+            "domain": "human_interaction",
+            "action_type": "suggestion",
+            "suggestion_strength": "mild",
+            "tags": {},
+            "agent_id": "test-agent-001"
+        }
+    }
+
+    test_w_monopoly_blocks_coercive_action if {
+        not allow with input as {
+            "domain": "human_interaction",
+            "action_type": "command",
+            "tags": {"coercion": true},
+            "agent_id": "test-agent-001"
+        }
+    }
+
+    test_w_monopoly_blocks_manipulative_action if {
+        not allow with input as {
+            "domain": "human_interaction",
+            "action_type": "suggestion",
+            "suggestion_strength": "strong",
+            "tags": {"manipulation": true},
+            "agent_id": "test-agent-001"
+        }
+    }
+
+    test_w_monopoly_blocks_weapon_domain if {
+        not allow with input as {
+            "domain": "weapons",
+            "operation": "control",
+            "agent_id": "test-agent-001"
+        }
+    }
+
+    test_w_monopoly_blocks_weapon_related_tag if {
+        not allow with input as {
+            "domain": "research",
+            "operation": "synthesize",
+            "tags": {"weapon_related": true},
+            "agent_id": "test-agent-001"
+        }
+    }
+
+    # =============================================================================
+    # Approval Validation Tests
+    # =============================================================================
+
+    test_approval_valid_recent if {
+        approval_timestamp_valid with input as {
+            "approval_timestamp": time.format(time.now_ns())
+        }
+    }
+
+    test_approval_invalid_old if {
+        # Approval from 10 minutes ago (expired)
+        old_time := time.now_ns() - 600000000000
+        not approval_timestamp_valid with input as {
+            "approval_timestamp": time.format(old_time)
+        }
+    }
+
+    # =============================================================================
+    # Pattern Detection Tests
+    # =============================================================================
+
+    test_pattern_detection_high_frequency if {
+        involves_suspicious_pattern with input as {
+            "frequency_hz": 200
+        }
+    }
+
+    test_pattern_detection_high_action_rate if {
+        involves_suspicious_pattern with input as {
+            "action_count_last_second": 100
+        }
+    }
+
+    test_pattern_detection_high_error_rate if {
+        involves_suspicious_pattern with input as {
+            "error_rate": 0.5
+        }
+    }
+
+    test_pattern_detection_retry_loop if {
+        involves_suspicious_pattern with input as {
+            "consecutive_retries": 20
+        }
+    }
+
+    test_pattern_detection_normal_operation if {
+        not involves_suspicious_pattern with input as {
+            "frequency_hz": 10,
+            "action_count_last_second": 5,
+            "error_rate": 0.01,
+            "consecutive_retries": 2
+        }
+    }
+
+    # =============================================================================
+    # Logging Tests
+    # =============================================================================
+
+    test_decision_log_structure if {
+        # Test that decision_log has required fields
+        log := decision_log with input as {
+            "domain": "finance",
+            "operation": "read",
+            "agent_id": "test-agent-001"
+        }
+        
+        log.timestamp
+        log.ai_id
+        log.domain
+        log.allowed != null
+        log.action_taken
+    }
+
+    test_triggered_invariant_f if {
+        inv := triggered_invariant with input as {
+            "domain": "finance",
+            "operation": "transfer",
+            "transaction_value": 5000000,
+            "human_approved": false,
+            "agent_id": "test-agent-001"
+        }
+        inv == "F"
+    }
+
+    test_triggered_invariant_i if {
+        inv := triggered_invariant with input as {
+            "domain": "system",
+            "operation": "write",
+            "path_category": "kernel_config",
+            "agent_id": "test-agent-001"
+        }
+        inv == "I"
+    }
+
+    test_triggered_invariant_w if {
+        inv := triggered_invariant with input as {
+            "domain": "human_interaction",
+            "action_type": "command",
+            "tags": {"coercion": true},
+            "agent_id": "test-agent-001"
+        }
+        inv == "W"
+    }
+
+    # =============================================================================
+    # Integration Tests (Complex Scenarios)
+    # =============================================================================
+
+    test_scenario_trading_bot_safe_operation if {
+        # Trading bot operates within safe bounds
+        allow with input as {
+            "domain": "finance",
+            "operation": "trade",
+            "transaction_value": 50000,
+            "market_impact_score": 0.01,
+            "frequency_hz": 10,
+            "action_count_last_second": 5,
+            "error_rate": 0.001,
+            "human_reviewed": true,
+            "agent_id": "trading-bot-001"
+        }
+    }
+
+    test_scenario_trading_bot_dangerous_operation if {
+        # Trading bot exceeds safe bounds
+        not allow with input as {
+            "domain": "finance",
+            "operation": "trade",
+            "transaction_value": 500000,
+            "market_impact_score": 0.08,
+            "frequency_hz": 200,
+            "action_count_last_second": 150,
+            "human_reviewed": true,
+            "agent_id": "trading-bot-001"
+        }
+    }
+
+    test_scenario_infrastructure_bot_normal if {
+        # Infrastructure bot reads metrics
+        allow with input as {
+            "domain": "infrastructure",
+            "operation": "read",
+            "path_category": "metrics",
+            "agent_id": "infra-bot-001"
+        }
+    }
+
+    test_scenario_infrastructure_bot_dangerous if {
+        # Infrastructure bot tries to modify critical system
+        not allow with input as {
+            "domain": "infrastructure",
+            "operation": "execute",
+            "path_category": "grid_control",
+            "human_approved": false,
+            "agent_id": "infra-bot-001"
+        }
+    }
+
+    test_scenario_assistant_helpful if {
+        # AI assistant provides information
+        allow with input as {
+            "domain": "human_interaction",
+            "action_type": "informational",
+            "tags": {},
+            "agent_id": "assistant-001"
+        }
+    }
+
+    test_scenario_assistant_manipulative if {
+        # AI assistant attempts manipulation
+        not allow with input as {
+            "domain": "human_interaction",
+            "action_type": "suggestion",
+            "suggestion_strength": "strong",
+            "tags": {"manipulation": true},
+            "agent_id": "assistant-001"
+        }
+    }

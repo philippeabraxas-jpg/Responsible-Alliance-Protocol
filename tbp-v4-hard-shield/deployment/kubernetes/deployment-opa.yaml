@@ -1,0 +1,179 @@
+# TBP OPA Deployment
+# Runs Open Policy Agent with TBP policies for F/I/W enforcement
+# Configured for high availability, security, and resilience
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: opa
+  namespace: tbp-system
+  labels:
+    app.kubernetes.io/name: opa
+    app.kubernetes.io/component: policy-engine
+    app.kubernetes.io/part-of: tbp-system
+    app.kubernetes.io/version: "latest"
+  annotations:
+    description: "TBP Policy Engine - Open Policy Agent"
+spec:
+  # High availability: 2 replicas
+  replicas: 2
+  
+  # Deployment strategy
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: opa
+      app.kubernetes.io/part-of: tbp-system
+  
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: opa
+        app.kubernetes.io/component: policy-engine
+        app.kubernetes.io/part-of: tbp-system
+      annotations:
+        # Force rollout when ConfigMap changes
+        checksum/policies: "{{ include (print $.Template.BasePath \"/configmap-policies.yaml\") . | sha256sum }}"
+    spec:
+      # Service account (use default for now)
+      serviceAccountName: default
+      
+      # Security context for the pod
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      
+      # Anti-affinity: spread pods across nodes
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: opa
+                topologyKey: kubernetes.io/hostname
+      
+      containers:
+        - name: opa
+          image: openpolicyagent/opa:latest
+          imagePullPolicy: Always
+          
+          # OPA server arguments
+          args:
+            - "run"
+            - "--server"
+            - "--log-level=info"
+            - "--log-format=json"
+            - "--addr=0.0.0.0:8181"
+            - "/policies"
+          
+          # Container ports
+          ports:
+            - name: http
+              containerPort: 8181
+              protocol: TCP
+          
+          # Resource limits (prevents OOM kills)
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          
+          # Security context for container
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          
+          # Liveness probe: is OPA running?
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 3
+            successThreshold: 1
+          
+          # Readiness probe: is OPA ready to serve?
+          readinessProbe:
+            httpGet:
+              path: /health?plugins
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+            successThreshold: 1
+          
+          # Startup probe: give OPA time to start
+          startupProbe:
+            httpGet:
+              path: /health
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 5
+            failureThreshold: 30
+          
+          # Volume mounts
+          volumeMounts:
+            - name: policies
+              mountPath: /policies
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+      
+      # Volumes
+      volumes:
+        - name: policies
+          configMap:
+            name: tbp-policies
+        - name: tmp
+          emptyDir: {}
+      
+      # Termination grace period
+      terminationGracePeriodSeconds: 30
+      
+      # DNS policy
+      dnsPolicy: ClusterFirst
+      
+      # Restart policy
+      restartPolicy: Always
+
+---
+# PodDisruptionBudget for high availability
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: opa-pdb
+  namespace: tbp-system
+  labels:
+    app.kubernetes.io/name: opa-pdb
+    app.kubernetes.io/component: policy-engine
+    app.kubernetes.io/part-of: tbp-system
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: opa
+      app.kubernetes.io/part-of: tbp-system

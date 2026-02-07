@@ -1,0 +1,60 @@
+# TBP NetworkPolicy - Default Deny All
+# Blocks all ingress and egress traffic to/from tbp-system namespace by default
+# This is the baseline security posture - all traffic is denied unless explicitly allowed
+# Implements Anti-DoS and Anti-Segmentation requirements from Issue #4
+
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: deny-all-ingress
+  namespace: tbp-system
+  labels:
+    app.kubernetes.io/name: deny-all-ingress
+    app.kubernetes.io/component: network-security
+    app.kubernetes.io/part-of: tbp-system
+  annotations:
+    description: "Default deny all ingress traffic to tbp-system namespace"
+spec:
+  # Apply to all pods in the namespace
+  podSelector: {}
+  
+  # Policy types - deny ingress
+  policyTypes:
+    - Ingress
+  
+  # Empty ingress rules = deny all ingress
+  ingress: []
+
+---
+# Deny all egress (with exception for DNS)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: deny-all-egress
+  namespace: tbp-system
+  labels:
+    app.kubernetes.io/name: deny-all-egress
+    app.kubernetes.io/component: network-security
+    app.kubernetes.io/part-of: tbp-system
+  annotations:
+    description: "Default deny all egress traffic from tbp-system namespace (except DNS)"
+spec:
+  # Apply to all pods in the namespace
+  podSelector: {}
+  
+  # Policy types - deny egress
+  policyTypes:
+    - Egress
+  
+  # Allow only DNS resolution (required for Kubernetes to function)
+  egress:
+    - to:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53

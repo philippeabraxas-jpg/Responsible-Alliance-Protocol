@@ -1,0 +1,21 @@
+# TBP Namespace
+# Isolates all TBP components in a dedicated namespace
+# Required for NetworkPolicy enforcement and resource quotas
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: tbp-system
+  labels:
+    # Used by NetworkPolicies for namespace selection
+    app.kubernetes.io/name: tbp
+    app.kubernetes.io/component: security
+    app.kubernetes.io/part-of: tbp-system
+    # Security labels
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/warn: restricted
+  annotations:
+    # Documentation
+    description: "Teleological Bounding Protocol - AI Safety Enforcement System"
+    documentation: "https://github.com/philippeabraxas-jpg/Responsible-Alliance-Protocol"
