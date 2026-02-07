@@ -8,9 +8,10 @@ We have mapped the failure points of human governance so they cannot be ignored.
 **Silence is the ally of catastrophe. TBP is designed to be loud.**
 
 ---
-
+SECURITY ADVISORY
+V4.1 is a logic-only reference. DO NOT use for financial/infrastructure production. Vulnerable to Single-Point-of-Failure (OPA Server compromise). Transitioning to v4.2 Multi-Party Signatures.
 ## Universal Safety Invariants for Autonomous AI Systems
-
+---
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 [![Version](https://img.shields.io/badge/Version-v4.0--Hard--Shield-green.svg)](https://github.com/philippeabraxas-jpg/Responsible-Alliance-Protocol/releases)
 [![Validation](https://img.shields.io/badge/Multi--Model%20Validation-5%2F5-brightgreen.svg)](#multi-model-validation)
