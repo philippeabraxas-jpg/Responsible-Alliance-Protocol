@@ -20,7 +20,7 @@ We have mapped the failure points of human governance so they cannot be ignored.
 1. Isolate TBP from production networks
 2. Enable external monitoring for OPA tampering
 3. Audit all decisions since deployment
-4. Contact security@tbp-protocol.org for migration plan
+4. Contact security@tbp-protocol.org for migration plan => not existent, go to issues for the moment
 
 **WORKAROUND**: Deploy OPA in read-only container with no shell access
 
