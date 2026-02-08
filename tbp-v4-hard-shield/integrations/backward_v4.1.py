@@ -75,7 +75,7 @@ class TBPLogSigner:
             use_hsm: Try to use HSM if available (v4.2)
             auto_migrate: Automatically upgrade to v4.2 features
         
-        TODO (Caetano):
+        TODO :
             1. Detect if HSM is available
             2. If yes: use v4.2 HSMSigner
             3. If no: fallback to v4.1 software keys
@@ -125,7 +125,7 @@ class TBPLogSigner:
         Returns:
             Signed log with backward-compatible format
         
-        TODO (Caetano):
+        TODO :
             1. Sign using underlying signer (v4.1 or v4.2)
             2. Add to Merkle chain if v4.2
             3. Return in v4.1 format for compatibility
@@ -143,7 +143,7 @@ class TBPLogSigner:
         Returns:
             True if signature valid
         
-        TODO (Caetano):
+        TODO :
             1. Detect if log is v4.1 or v4.2 format
             2. Verify using appropriate method
             3. Return boolean
@@ -172,7 +172,7 @@ class MigrationHelper:
         """
         Initialize migration helper.
         
-        TODO (Caetano):
+        TODO :
             1. Setup logging
             2. Initialize counters
             3. Prepare migration tracking
@@ -189,7 +189,7 @@ class MigrationHelper:
             input_file: Path to v4.1 logs (JSON)
             output_file: Path for v4.2 logs
         
-        TODO (Caetano):
+        TODO :
             1. Read v4.1 logs
             2. For each log:
                - Verify v4.1 signature (ensure not tampered)
@@ -216,7 +216,7 @@ class MigrationHelper:
         Returns:
             True if migration successful
         
-        TODO (Caetano):
+        TODO :
             1. Count logs in input vs output
             2. Verify each signature
             3. Check Merkle chain
@@ -232,7 +232,7 @@ class MigrationHelper:
         Returns:
             Markdown-formatted report
         
-        TODO (Caetano):
+        TODO :
             Include:
             - Total logs migrated
             - Failures (if any)
@@ -272,7 +272,7 @@ def detect_version() -> str:
     Returns:
         "v4.1" or "v4.2" or "unknown"
     
-    TODO (Caetano):
+    TODO :
         1. Check for HSM presence
         2. Check for Merkle chain
         3. Check log format
