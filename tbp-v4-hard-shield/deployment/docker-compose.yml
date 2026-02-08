@@ -15,6 +15,7 @@ services:
     command:
       - "run"
       - "--server"
+      - "--addr=0.0.0.0:8181"  # FIXED: Bind to all interfaces
       - "--log-level=info"
       - "--log-format=json"
       - "/policies"
