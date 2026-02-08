@@ -141,7 +141,7 @@ pytest tests/ -v
 - [x] Stubs for core modules
 
 ### 🚧 In Progress
-- [ ] HSM signer implementation (see core/hsm_signer.py)
+- [x] HSM signer implementation (see core/hsm_signer.py)
 - [ ] Merkle audit chain (see core/merkle_audit.py)
 - [ ] Pattern analysis engine
 - [ ] Rate limiting infrastructure
