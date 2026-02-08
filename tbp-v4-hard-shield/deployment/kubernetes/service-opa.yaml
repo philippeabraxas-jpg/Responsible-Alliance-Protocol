@@ -1,0 +1,33 @@
+# TBP OPA Service
+# Exposes OPA policy engine internally within the cluster
+# ClusterIP only - no external access (security requirement)
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: opa
+  namespace: tbp-system
+  labels:
+    app.kubernetes.io/name: opa
+    app.kubernetes.io/component: policy-engine
+    app.kubernetes.io/part-of: tbp-system
+  annotations:
+    description: "TBP Policy Engine Service - Internal access only"
+spec:
+  # ClusterIP: Internal access only (no external exposure)
+  type: ClusterIP
+  
+  # Service ports
+  ports:
+    - name: http
+      port: 8181
+      targetPort: http
+      protocol: TCP
+  
+  # Pod selector
+  selector:
+    app.kubernetes.io/name: opa
+    app.kubernetes.io/part-of: tbp-system
+  
+  # Session affinity (optional: for consistent routing)
+  sessionAffinity: None
