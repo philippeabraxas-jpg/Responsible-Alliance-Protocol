@@ -118,7 +118,7 @@ networks:
   tbp-network:
     driver: bridge
 
-volumes:  # Ajouté pour définir les volumes nommés
+volumes:  
   prometheus-data:
   grafana-data:
   postgres-data:
