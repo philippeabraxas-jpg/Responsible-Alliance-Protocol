@@ -24,7 +24,7 @@ IMPLEMENTATION NOTES:
     - Fallback to software keys for development/testing
     - All operations must be auditable
 
-TODO (Caetano):
+TODO :
     1. Install PKCS#11 libraries:
        pip install python-pkcs11
        
@@ -154,7 +154,7 @@ class HSMSigner:
         """
         Development mode: Use software keys.
         
-        TODO (Caetano):
+        TODO :
             1. Generate RSA 2048-bit key pair
             2. Store in memory (NOT in file)
             3. Warn user this is NOT secure for production
@@ -167,7 +167,7 @@ class HSMSigner:
         """
         Connect to real HSM device.
         
-        TODO (Caetano):
+        TODO :
             1. Load PKCS#11 library
             2. Open session to specified slot
             3. Login with PIN
@@ -224,7 +224,7 @@ class HSMSigner:
         Returns:
             True if signature is valid, False otherwise
         
-        TODO (Caetano):
+        TODO :
             1. Hash data (same algorithm as signing)
             2. Verify signature using public key
             3. Return True/False
@@ -245,7 +245,7 @@ class HSMSigner:
         Returns:
             Public key in PEM format
         
-        TODO (Caetano):
+        TODO :
             1. Extract public key from HSM
             2. Encode in PEM format
             3. Return bytes
@@ -267,7 +267,7 @@ class HSMSigner:
         Returns:
             {"public_key": bytes, "key_id": str}
         
-        TODO (Caetano):
+        TODO :
             1. Generate RSA key pair in HSM
             2. Set label for key identification
             3. Extract public key
@@ -285,7 +285,7 @@ class HSMSigner:
         """
         Close HSM session and cleanup.
         
-        TODO (Caetano):
+        TODO :
             1. Logout from HSM
             2. Close session
             3. Release resources
