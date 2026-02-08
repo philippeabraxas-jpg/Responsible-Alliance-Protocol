@@ -47,6 +47,9 @@ from enum import Enum
 from dataclasses import dataclass
 import json
 import hashlib 
+import struct
+import subprocess
+import tempfile
 
 # PKCS#11 dependencies
 try:
@@ -312,6 +315,18 @@ class HSMSigner:
 
         if self.hsm_type not in [HSMType.SOFTWARE]:
             self._start_keepalive()
+
+        # Check optional dependencies based on HSM type
+        if self.hsm_type == HSMType.AZURE_KEYVAULT:
+            try:
+                from azure.identity import DefaultAzureCredential
+                from azure.keyvault.keys import KeyClient
+                from azure.keyvault.keys.crypto import CryptographyClient
+            except ImportError:
+                raise HSMConnectionError(
+                    "Azure Key Vault SDK not installed. "
+                    "Install with: pip install azure-identity azure-keyvault-keys"
+                )
     
     def _init_software_fallback(self, auto_generate_key: bool):
         """
@@ -527,7 +542,6 @@ class HSMSigner:
                         )
             
             # Generate key ID
-            import hashlib
             self.key_id = f"hsm-{hashlib.sha256(self.public_key_pem).hexdigest()[:16]}"
             
         except HSMKeyError:
@@ -542,7 +556,7 @@ class HSMSigner:
         Note: This requires azure-identity and azure-keyvault-keys packages.
         """
         try:
-            # Azure Key Vault SDK
+            # Azure Key Vault SDK (checked in __init__)
             from azure.identity import DefaultAzureCredential
             from azure.keyvault.keys import KeyClient
             
@@ -642,49 +656,43 @@ class HSMSigner:
         self, 
         data: bytes, 
         agent_id: str,
-        timestamp: Optional[float] = None,
-        require_tsa: bool = False
+        timestamp: Optional[float] = None
     ) -> SigningResult:
         """
         Sign data using HSM private key.
         
         Args:
             data: Data to sign (typically JSON-encoded log)
-            agent_id: ID of the agent (prevents signature replay attacks)
+            agent_id: ID of the agent (1-256 chars)
             timestamp: Optional timestamp (defaults to current time)
-            require_tsa: Require RFC 3161 trusted timestamp (production)
         
         Returns:
             SigningResult with signature and metadata
         
         Raises:
             HSMSigningError: If signing fails
+            ValueError: If input validation fails
         """
+        # Input validation
+        if not agent_id or len(agent_id) > 256:
+            raise ValueError("agent_id must be 1-256 characters")
+        
+        if len(data) > 10 * 1024 * 1024:  # 10MB
+            raise ValueError("Data too large for signing (max 10MB)")
+
         self._check_rate_limit()
         
         # Handle timestamp
         if timestamp is None:
-            if require_tsa:
-                # Get trusted timestamp from TSA (RFC 3161)
-                try:
-                    from core.time_attester import TimeAttester
-                    attester = TimeAttester()
-                    timestamp, tsa_signature = attester.get_trusted_timestamp(data)
-                    logger.info(f"Got trusted timestamp from TSA: {timestamp}")
-                except ImportError:
-                    logger.error("core.time_attester not found. Cannot use TSA.")
-                    timestamp = time.time()
-            else:
-                timestamp = time.time()
-                if PRODUCTION_MODE:
-                    logger.warning("⚠️  Using system clock (not RFC 3161 certified)")
+            timestamp = time.time()
+            if PRODUCTION_MODE:
+                logger.warning("⚠️  Using system clock (not RFC 3161 certified)")
         
         logger.debug(f"Signing {len(data)} bytes (agent={agent_id}, key={self.key_id})")
         
         try:
             # Create data to sign: hash(agent_id + timestamp + data)
             # This prevents signature replay across agents
-            import struct
             agent_id_bytes = agent_id.encode('utf-8')
             agent_id_len = struct.pack('!H', len(agent_id_bytes))  # 2-byte length prefix
             timestamp_bytes = struct.pack('!d', timestamp)
@@ -771,7 +779,6 @@ class HSMSigner:
         
         try:
             # Reconstruct the signed data (must match sign() exactly)
-            import struct
             agent_id_bytes = agent_id.encode('utf-8')
             agent_id_len = struct.pack('!H', len(agent_id_bytes))
             timestamp_bytes = struct.pack('!d', signature.timestamp)
@@ -848,7 +855,6 @@ class HSMSigner:
                 format=serialization.PublicFormat.SubjectPublicKeyInfo
             )
             
-            import hashlib
             self.key_id = f"software-{hashlib.sha256(self.public_key_pem).hexdigest()[:16]}"
             
         elif self.hsm_type == HSMType.AZURE_KEYVAULT:
@@ -903,9 +909,6 @@ def setup_softhsm_test():
     Returns:
         Tuple of (library_path, slot_id, pin)
     """
-    import subprocess
-    import tempfile
-    
     # Check if SoftHSM2 is installed
     try:
         subprocess.run(["softhsm2-util", "--show-slots"], 
@@ -1015,3 +1018,4 @@ if __name__ == "__main__":
         print(f"   ✓ Correctly blocked: {e}")
     
     print("\n=== All Security Patches Applied ===")
+
