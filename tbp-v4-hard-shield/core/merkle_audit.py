@@ -45,7 +45,7 @@ BENEFITS:
     3. Public Verification: Anyone can verify integrity
     4. Efficient: Only need root hash to verify tree integrity
 
-TODO (Caetano):
+TODO :
     1. Implement MerkleTree class
     2. Implement chain linking (prev_hash)
     3. Implement root computation
@@ -106,7 +106,7 @@ class AuditEntry:
             previous_hash: Hash of previous entry (None for genesis)
             signature: HSM signature of this entry
         
-        TODO (Caetano):
+        TODO :
             1. Store data, previous_hash, signature
             2. Compute own hash (compute_hash method)
             3. Add timestamp
@@ -204,7 +204,7 @@ class MerkleAuditChain:
         """
         Initialize empty audit chain.
         
-        TODO (Caetano):
+        TODO :
             1. Initialize empty entries list
             2. Set genesis hash
             3. Initialize Merkle tree
@@ -221,7 +221,7 @@ class MerkleAuditChain:
             data: Log data
             signature: HSM signature (optional)
         
-        TODO (Caetano):
+        TODO :
             1. Get hash of last entry (or genesis if empty)
             2. Create new AuditEntry with previous_hash
             3. Append to entries list
@@ -250,7 +250,7 @@ class MerkleAuditChain:
         Returns:
             True if chain is intact, False if tampered
         
-        TODO (Caetano):
+        TODO :
             1. Iterate through entries
             2. Recompute each hash, compare to stored
             3. Verify previous_hash linkage
@@ -291,7 +291,7 @@ class MerkleAuditChain:
         Returns:
             Hex-encoded root hash
         
-        TODO (Caetano):
+        TODO :
             1. Build Merkle tree from all entry hashes
             2. Return root hash
         """
@@ -313,7 +313,7 @@ class MerkleAuditChain:
         Returns:
             List of hashes forming Merkle proof
         
-        TODO (Caetano):
+        TODO :
             1. Get path from entry to root
             2. Collect sibling hashes
             3. Return proof
@@ -338,7 +338,7 @@ class MerkleAuditChain:
         Returns:
             True if entry is in tree with this root
         
-        TODO (Caetano):
+        TODO :
             1. Start with entry hash
             2. Compute path up tree using proof
             3. Compare computed root to provided root
@@ -351,7 +351,7 @@ class MerkleAuditChain:
         """
         Save chain to file.
         
-        TODO (Caetano):
+        TODO :
             1. Serialize all entries
             2. Write to JSON file
             3. Log save operation
@@ -363,7 +363,7 @@ class MerkleAuditChain:
         """
         Load chain from file.
         
-        TODO (Caetano):
+        TODO :
             1. Read JSON file
             2. Deserialize entries
             3. Verify integrity after load
@@ -382,7 +382,7 @@ class MerkleTree:
     - Internal nodes = hash of children
     - Root = single hash representing all leaves
     
-    TODO (Caetano):
+    TODO :
         1. Build tree from list of hashes
         2. Compute root hash
         3. Generate proofs
@@ -400,7 +400,7 @@ class MerkleTree:
         Args:
             leaves: List of hex-encoded hashes
         
-        TODO (Caetano):
+        TODO :
             1. Pad leaves to power of 2 (duplicate last if needed)
             2. Build tree bottom-up
             3. Store tree structure
@@ -421,7 +421,7 @@ class MerkleTree:
         Returns:
             Root hash
         
-        TODO (Caetano):
+        TODO :
             Implement tree building algorithm
         """
         # TODO: Implement tree building
@@ -438,7 +438,7 @@ class MerkleTree:
         Returns:
             Parent hash
         
-        TODO (Caetano):
+        TODO :
             return hashlib.sha256((left + right).encode()).hexdigest()
         """
         # TODO: Implement pair hashing
