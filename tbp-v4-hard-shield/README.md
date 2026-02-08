@@ -39,33 +39,6 @@
 **Solution:** Per-agent rate limits, priority queues
 
 ---
-new architecture:
-┌─────────────────┐      ┌─────────────────┐
-│   Serveur OPA   │──────│   Signeur #1    │
-│  (Décision)     │      │  (Clé Privée 1) │
-└─────────────────┘      └─────────────────┘
-         │                       │
-         └───────────┬───────────┘
-                     ↓
-┌─────────────────────────────────────┐
-│        Log Partiellement Signé      │
-│  (Signature OPA + Signature #1)     │
-└─────────────────────────────────────┘
-                     │
-                     ↓
-            [ TRANSMISSION RÉSEAU ]
-                     │
-                     ↓
-┌─────────────────┐      ┌─────────────────┐
-│   Service Audit │──────│   Signeur #2    │
-│  (Vérification) │      │  (Clé Privée 2) │
-└─────────────────┘      └─────────────────┘
-                     │
-                     ↓
-┌─────────────────────────────────────┐
-│      Log Complètement Signé         │
-│  (Signature #1 + Signature #2)      │
-└─────────────────────────────────────┘
 
 ## 📂 Directory Structure
 
