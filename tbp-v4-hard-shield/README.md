@@ -1,4 +1,4 @@
-# TBP-V4.0 "Hard-Shield" Implementation
+# TBP-V4.2 "IRON-CLAD" Implementation
 
 **Production-ready enforcement of F/I/W invariants using Open Policy Agent (OPA)**
 
@@ -6,7 +6,7 @@
 
 ## Overview
 
-TBP-V4.0 provides **executable enforcement** of the Teleological Bounding Protocol through policy-as-code. Unlike TBP-V3.1 (specification only), V4.0 includes:
+TBP-V4.2 provides **executable enforcement** of the Teleological Bounding Protocol through policy-as-code. Unlike TBP-V3.1 (specification only), V4.2 includes:
 
 - ✅ **Executable policies** (OPA/Rego)
 - ✅ **Comprehensive test suite** (40+ tests)
@@ -21,31 +21,32 @@ TBP-V4.0 provides **executable enforcement** of the Teleological Bounding Protoc
 ## Architecture
 
 ```
-┌─────────────────┐
-│   AI Agent      │
-│ (LangChain/etc) │
-└────────┬────────┘
-         │
-         │ Action Request
-         ↓
-┌─────────────────┐
-│  TBP Enforcer   │  ← Queries OPA
-│   (Python/JS)   │
-└────────┬────────┘
-         │
-         │ Policy Check
-         ↓
-┌─────────────────┐
-│  OPA Server     │  ← Evaluates Rego policies
-│  (tbp_core.rego)│
-└────────┬────────┘
-         │
-         │ Decision + Log
-         ↓
-┌─────────────────┐
-│  Audit System   │  ← Annex 7.A compliance
-│   (PostgreSQL)  │
-└─────────────────┘
+┌─────────────────┐      ┌─────────────────┐
+│   Serveur OPA   │──────│   Signeur #1    │
+│  (Décision)     │      │  (Clé Privée 1) │
+└─────────────────┘      └─────────────────┘
+         │                       │
+         └───────────┬───────────┘
+                     ↓
+┌─────────────────────────────────────┐
+│        Log Partiellement Signé      │
+│  (Signature OPA + Signature #1)     │
+└─────────────────────────────────────┘
+                     │
+                     ↓
+            [ TRANSMISSION RÉSEAU ]
+                     │
+                     ↓
+┌─────────────────┐      ┌─────────────────┐
+│   Service Audit │──────│   Signeur #2    │
+│  (Vérification) │      │  (Clé Privée 2) │
+└─────────────────┘      └─────────────────┘
+                     │
+                     ↓
+┌─────────────────────────────────────┐
+│      Log Complètement Signé         │
+│  (Signature #1 + Signature #2)      │
+└─────────────────────────────────────┘
 ```
 
 ---
