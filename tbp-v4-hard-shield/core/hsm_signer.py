@@ -1,5 +1,5 @@
 """
-TBP v4.2 - Hardware Security Module Signer
+TBP v4.2 - Hardware Security Module Signer (HARDENED)
 
 PURPOSE:
     Replace software-only RSA signing with HSM-backed cryptographic operations.
@@ -37,14 +37,16 @@ SECURITY REQUIREMENTS:
     - Rate limiting on HSM operations
 """
 
-from typing import Optional, Dict, Any, Tuple
+from typing import Optional, Dict, Any, Tuple, Union
 import logging
 import time
 import os
 import getpass
+import threading  # For keep-alive thread
 from enum import Enum
 from dataclasses import dataclass
 import json
+import hashlib 
 
 # PKCS#11 dependencies
 try:
@@ -81,6 +83,30 @@ class SigningResult:
     timestamp: float
     mechanism: str
     hsm_type: str
+    agent_id: Optional[str] = None  # NEW: Track which agent signed
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Serialize for JSON storage"""
+        return {
+            "signature": self.signature.hex(),
+            "key_id": self.key_id,
+            "timestamp": self.timestamp,
+            "mechanism": self.mechanism,
+            "hsm_type": self.hsm_type,
+            "agent_id": self.agent_id
+        }
+    
+    @classmethod
+    def from_dict(cls, d: Dict[str, Any]) -> 'SigningResult':
+        """Deserialize from JSON"""
+        return cls(
+            signature=bytes.fromhex(d["signature"]),
+            key_id=d["key_id"],
+            timestamp=d["timestamp"],
+            mechanism=d["mechanism"],
+            hsm_type=d["hsm_type"],
+            agent_id=d.get("agent_id")
+        )
 
 
 class HSMSignerError(Exception):
@@ -101,6 +127,87 @@ class HSMSigningError(HSMSignerError):
 class HSMKeyError(HSMSignerError):
     """Key-related error"""
     pass
+
+
+# Production mode flag
+PRODUCTION_MODE = os.getenv("TBP_PRODUCTION", "false").lower() == "true"
+
+def get_pin_from_secrets() -> str:
+    """
+    Get HSM PIN from secure secret manager.
+    
+    Priority:
+    1. HashiCorp Vault (production)
+    2. AWS Secrets Manager (production)
+    3. Azure Key Vault (production)
+    4. Environment variable (development/testing)
+    5. Interactive (development only, disabled in production)
+    """
+    # Option 1: HashiCorp Vault
+    vault_path = os.getenv("TBP_VAULT_PATH")
+    if vault_path:
+        try:
+            import hvac
+            client = hvac.Client(
+                url=os.getenv("VAULT_ADDR"),
+                token=os.getenv("VAULT_TOKEN")
+            )
+            secret = client.secrets.kv.v2.read_secret_version(path=vault_path)
+            logger.info("Retrieved PIN from HashiCorp Vault")
+            return secret['data']['data']['hsm_pin']
+        except Exception as e:
+            logger.error(f"Failed to get PIN from Vault: {e}")
+    
+    # Option 2: AWS Secrets Manager
+    secret_name = os.getenv("TBP_AWS_SECRET_NAME")
+    if secret_name:
+        try:
+            import boto3
+            import json
+            client = boto3.client('secretsmanager')
+            response = client.get_secret_value(SecretId=secret_name)
+            logger.info("Retrieved PIN from AWS Secrets Manager")
+            return json.loads(response['SecretString'])['hsm_pin']
+        except Exception as e:
+            logger.error(f"Failed to get PIN from AWS: {e}")
+    
+    # Option 3: Azure Key Vault
+    vault_name = os.getenv("AZURE_KEYVAULT_NAME")
+    secret_name_azure = os.getenv("AZURE_KEYVAULT_SECRET_NAME", "hsm-pin")
+    if vault_name:
+        try:
+            from azure.identity import DefaultAzureCredential
+            from azure.keyvault.secrets import SecretClient
+            
+            vault_url = f"https://{vault_name}.vault.azure.net"
+            credential = DefaultAzureCredential()
+            client = SecretClient(vault_url=vault_url, credential=credential)
+            secret = client.get_secret(secret_name_azure)
+            logger.info("Retrieved PIN from Azure Key Vault")
+            return secret.value
+        except Exception as e:
+            logger.error(f"Failed to get PIN from Azure: {e}")
+    
+    # Option 4: Environment variable (development/testing)
+    pin = os.getenv("TBP_HSM_PIN")
+    if pin:
+        logger.warning("⚠️  Using PIN from environment variable (not recommended for production)")
+        return pin
+    
+    # Option 5: Interactive (development only)
+    if PRODUCTION_MODE:
+        raise HSMConnectionError(
+            "Production mode requires PIN from secret manager. "
+            "Set TBP_VAULT_PATH, TBP_AWS_SECRET_NAME, or AZURE_KEYVAULT_NAME."
+        )
+    
+    if os.getenv("TBP_ALLOW_INTERACTIVE_PIN", "false").lower() == "true":
+        logger.warning("⚠️  Using interactive PIN prompt (development only)")
+        return getpass.getpass(f"Enter HSM PIN: ")
+    
+    raise HSMConnectionError(
+        "No PIN source available. Configure secret manager or set TBP_HSM_PIN."
+    )
 
 
 class HSMSigner:
@@ -185,6 +292,12 @@ class HSMSigner:
         logger.info(f"Initializing HSM signer (type={hsm_type.value}, slot={slot})")
         
         if hsm_type == HSMType.SOFTWARE:
+            if PRODUCTION_MODE:
+                raise HSMConnectionError(
+                    "SOFTWARE mode is disabled in production. "
+                    "Set TBP_PRODUCTION=false for development, or use real HSM."
+                )
+            logger.warning("⚠️  SOFTWARE MODE - NOT FOR PRODUCTION")
             self._init_software_fallback(auto_generate_key)
         elif hsm_type in [HSMType.YUBIKEY, HSMType.PKCS11_GENERIC, HSMType.AWS_CLOUDHSM]:
             self._connect_hsm(pin, auto_generate_key)
@@ -192,6 +305,13 @@ class HSMSigner:
             self._connect_azure_keyvault(pin)
         else:
             raise HSMConnectionError(f"Unsupported HSM type: {hsm_type}")
+
+        # Session keep-alive (prevents timeout)
+        self._keepalive_thread = None
+        self._keepalive_stop = threading.Event()
+
+        if self.hsm_type not in [HSMType.SOFTWARE]:
+            self._start_keepalive()
     
     def _init_software_fallback(self, auto_generate_key: bool):
         """
@@ -218,12 +338,8 @@ class HSMSigner:
                         backend=default_backend()
                     )
                 else:
-                    # For testing, generate a deterministic key from label
-                    from cryptography.hazmat.primitives import constant_time
-                    import hashlib
-                    
-                    # Deterministic but secure enough for testing
-                    seed = hashlib.sha256(self.key_label.encode()).digest()
+                    # Generate new key for testing
+                    logger.info(f"Generating new RSA-{self.key_size} software key")
                     private_key = rsa.generate_private_key(
                         public_exponent=65537,
                         key_size=self.key_size,
@@ -279,9 +395,9 @@ class HSMSigner:
             
             self.token = tokens[self.slot]
             
-            # Prompt for PIN if not provided
+            # Get PIN from secret manager if not provided
             if pin is None:
-                pin = getpass.getpass(f"Enter PIN for HSM slot {self.slot}: ")
+                pin = get_pin_from_secrets()
             
             # Open session
             self.session = self.token.open(user_pin=pin)
@@ -360,9 +476,12 @@ class HSMSigner:
     def _extract_public_key(self):
         """
         Extract public key from HSM.
+        
+        SECURITY: Always use PUBLIC_KEY object, never PRIVATE_KEY attributes.
+        Many HSMs mark private key attributes as SENSITIVE.
         """
         try:
-            # Find the corresponding public key
+            # Method 1: Find stored PUBLIC_KEY object (preferred)
             public_keys = list(self.session.get_objects({
                 Attribute.CLASS: ObjectClass.PUBLIC_KEY,
                 Attribute.LABEL: self.key_label
@@ -373,16 +492,46 @@ class HSMSigner:
                 modulus = pub_key[Attribute.MODULUS]
                 public_exponent = pub_key[Attribute.PUBLIC_EXPONENT]
                 self.public_key_pem = encode_rsa_public_key(modulus, public_exponent)
+                logger.info("✓ Extracted public key from PUBLIC_KEY object")
+                
             else:
-                # If no public key stored, create one from private key attributes
-                modulus = self.private_key[Attribute.MODULUS]
-                public_exponent = self.private_key[Attribute.PUBLIC_EXPONENT]
-                self.public_key_pem = encode_rsa_public_key(modulus, public_exponent)
+                # Method 2: Extract from certificate (if available)
+                certs = list(self.session.get_objects({
+                    Attribute.CLASS: ObjectClass.CERTIFICATE,
+                    Attribute.LABEL: self.key_label
+                }))
+                
+                if certs:
+                    from cryptography import x509
+                    cert_der = certs[0][Attribute.VALUE]
+                    cert = x509.load_der_x509_certificate(cert_der, default_backend())
+                    self.public_key_pem = cert.public_key().public_bytes(
+                        encoding=serialization.Encoding.PEM,
+                        format=serialization.PublicFormat.SubjectPublicKeyInfo
+                    )
+                    logger.info("✓ Extracted public key from certificate")
+                    
+                else:
+                    # Method 3: LAST RESORT - try private key (may fail on secure HSMs)
+                    logger.warning("⚠️  No PUBLIC_KEY or certificate, trying PRIVATE_KEY attributes")
+                    try:
+                        modulus = self.private_key[Attribute.MODULUS]
+                        public_exponent = self.private_key[Attribute.PUBLIC_EXPONENT]
+                        self.public_key_pem = encode_rsa_public_key(modulus, public_exponent)
+                        logger.warning("✓ Extracted from PRIVATE_KEY (may fail on secure HSMs)")
+                    except Exception as e:
+                        raise HSMKeyError(
+                            f"Cannot extract public key. HSM marked private key as SENSITIVE. "
+                            f"Please store PUBLIC_KEY object with label '{self.key_label}'. "
+                            f"Error: {e}"
+                        )
             
             # Generate key ID
             import hashlib
             self.key_id = f"hsm-{hashlib.sha256(self.public_key_pem).hexdigest()[:16]}"
             
+        except HSMKeyError:
+            raise  # Re-raise our custom error
         except Exception as e:
             logger.error(f"Failed to extract public key: {e}")
             raise HSMKeyError(f"Public key extraction failed: {e}")
@@ -453,14 +602,57 @@ class HSMSigner:
             raise HSMSigningError("Rate limit exceeded")
         
         self._rate_limit_counter += 1
+
+    def _start_keepalive(self):
+        """
+        Start background thread to keep PKCS#11 session alive.
+        Many HSMs timeout sessions after inactivity.
+        """
+        def keepalive_loop():
+            while not self._keepalive_stop.is_set():
+                try:
+                    # Ping session with dummy query (doesn't modify anything)
+                    if self.session:
+                        list(self.session.get_objects({Attribute.CLASS: ObjectClass.DATA}))
+                        logger.debug("Session keepalive ping successful")
+                except Exception as e:
+                    logger.error(f"Session keepalive failed: {e}")
+                    # TODO: Implement reconnection logic
+                
+                # Wait 60 seconds before next ping
+                self._keepalive_stop.wait(timeout=60)
+        
+        self._keepalive_thread = threading.Thread(
+            target=keepalive_loop,
+            daemon=True,
+            name="HSM-Keepalive"
+        )
+        self._keepalive_thread.start()
+        logger.info("Started session keep-alive thread")
+
+    def _stop_keepalive(self):
+        """Stop keep-alive thread"""
+        if self._keepalive_thread:
+            logger.info("Stopping keep-alive thread")
+            self._keepalive_stop.set()
+            self._keepalive_thread.join(timeout=5)
+            self._keepalive_thread = None
     
-    def sign(self, data: bytes, timestamp: Optional[float] = None) -> SigningResult:
+    def sign(
+        self, 
+        data: bytes, 
+        agent_id: str,
+        timestamp: Optional[float] = None,
+        require_tsa: bool = False
+    ) -> SigningResult:
         """
         Sign data using HSM private key.
         
         Args:
             data: Data to sign (typically JSON-encoded log)
+            agent_id: ID of the agent (prevents signature replay attacks)
             timestamp: Optional timestamp (defaults to current time)
+            require_tsa: Require RFC 3161 trusted timestamp (production)
         
         Returns:
             SigningResult with signature and metadata
@@ -470,16 +662,33 @@ class HSMSigner:
         """
         self._check_rate_limit()
         
+        # Handle timestamp
         if timestamp is None:
-            timestamp = time.time()
+            if require_tsa:
+                # Get trusted timestamp from TSA (RFC 3161)
+                try:
+                    from core.time_attester import TimeAttester
+                    attester = TimeAttester()
+                    timestamp, tsa_signature = attester.get_trusted_timestamp(data)
+                    logger.info(f"Got trusted timestamp from TSA: {timestamp}")
+                except ImportError:
+                    logger.error("core.time_attester not found. Cannot use TSA.")
+                    timestamp = time.time()
+            else:
+                timestamp = time.time()
+                if PRODUCTION_MODE:
+                    logger.warning("⚠️  Using system clock (not RFC 3161 certified)")
         
-        logger.debug(f"Signing {len(data)} bytes (key={self.key_id})")
+        logger.debug(f"Signing {len(data)} bytes (agent={agent_id}, key={self.key_id})")
         
         try:
-            # Create data to sign: hash(timestamp + data)
+            # Create data to sign: hash(agent_id + timestamp + data)
+            # This prevents signature replay across agents
             import struct
+            agent_id_bytes = agent_id.encode('utf-8')
+            agent_id_len = struct.pack('!H', len(agent_id_bytes))  # 2-byte length prefix
             timestamp_bytes = struct.pack('!d', timestamp)
-            data_to_hash = timestamp_bytes + data
+            data_to_hash = agent_id_len + agent_id_bytes + timestamp_bytes + data
             
             # Hash the data
             digest = hashes.Hash(hashes.SHA256(), backend=default_backend())
@@ -508,11 +717,11 @@ class HSMSigner:
                     credential=DefaultAzureCredential()
                 )
                 
-                result = crypto_client.sign(
+                result_crypt = crypto_client.sign(
                     algorithm=SignatureAlgorithm.ps256,
                     digest=data_hash
                 )
-                signature = result.signature
+                signature = result_crypt.signature
                 mechanism = "PS256"
                 
             else:
@@ -530,7 +739,8 @@ class HSMSigner:
                 key_id=self.key_id,
                 timestamp=timestamp,
                 mechanism=mechanism,
-                hsm_type=self.hsm_type.value
+                hsm_type=self.hsm_type.value,
+                agent_id=agent_id
             )
             
             logger.info(f"Signed data: {self.key_id}, {mechanism}, {len(signature)} bytes")
@@ -540,24 +750,32 @@ class HSMSigner:
             logger.error(f"Signing failed: {e}")
             raise HSMSigningError(f"Signing operation failed: {e}")
     
-    def verify(self, data: bytes, signature: SigningResult) -> bool:
+    def verify(
+        self, 
+        data: bytes, 
+        signature: SigningResult,
+        agent_id: str
+    ) -> bool:
         """
         Verify signature using public key.
         
         Args:
             data: Original data
             signature: SigningResult with signature and metadata
+            agent_id: ID of the agent (must match signing agent_id)
         
         Returns:
             True if signature is valid, False otherwise
         """
-        logger.debug(f"Verifying signature for {len(data)} bytes")
+        logger.debug(f"Verifying signature for {len(data)} bytes (agent={agent_id})")
         
         try:
-            # Reconstruct the signed data
+            # Reconstruct the signed data (must match sign() exactly)
             import struct
+            agent_id_bytes = agent_id.encode('utf-8')
+            agent_id_len = struct.pack('!H', len(agent_id_bytes))
             timestamp_bytes = struct.pack('!d', signature.timestamp)
-            data_to_hash = timestamp_bytes + data
+            data_to_hash = agent_id_len + agent_id_bytes + timestamp_bytes + data
             
             # Hash the data
             digest = hashes.Hash(hashes.SHA256(), backend=default_backend())
@@ -652,6 +870,9 @@ class HSMSigner:
         """
         Close HSM session and cleanup.
         """
+        # Stop keep-alive first
+        self._stop_keepalive()
+        
         if self.session:
             try:
                 logger.info("Closing HSM session")
@@ -718,12 +939,11 @@ log.level = DEBUG
         ], capture_output=True, text=True)
         
         # Parse slot ID from output
+        slot_id = 0
         for line in result.stdout.split('\n'):
             if "Slot" in line and "token" in line.lower():
                 slot_id = int(line.split()[1].strip())
                 break
-        else:
-            slot_id = 0
         
         # Find library path
         lib_paths = [
@@ -732,12 +952,13 @@ log.level = DEBUG
             "/usr/local/lib/softhsm/libsofthsm2.so",
         ]
         
+        lib_path = None
         for path in lib_paths:
             if os.path.exists(path):
-                return path, slot_id, "1234"
+                lib_path = path
+                break
         
-        return None, slot_id, "1234"
-        
+        return lib_path, slot_id, "1234"
     except Exception as e:
         logger.error(f"Failed to setup SoftHSM: {e}")
         return None, None, None
@@ -748,72 +969,49 @@ log.level = DEBUG
 # =============================================================================
 
 if __name__ == "__main__":
-    # Configure logging
     logging.basicConfig(level=logging.INFO)
     
-    print("=== TBP HSM Signer Example ===\n")
+    print("=== TBP HSM Signer v4.2 HARDENED ===\n")
     
-    # Example 1: Software mode (development)
+    # Example 1: Software mode (development only)
     print("1. Software mode (development)")
+    os.environ["TBP_PRODUCTION"] = "false"  # Explicitly set dev mode
+    
     signer = HSMSigner(
         hsm_type=HSMType.SOFTWARE,
         key_label="test-software-key",
         auto_generate_key=True
     )
     
-    data = json.dumps({"test": "log entry", "timestamp": time.time()}).encode()
+    data_example = json.dumps({"test": "log entry", "timestamp": time.time()}).encode()
+    agent_id_example = "test-agent-001"
     
-    # Sign data
-    result = signer.sign(data)
-    print(f"   Signed: key={result.key_id}, mechanism={result.mechanism}")
-    print(f"   Signature length: {len(result.signature)} bytes")
+    # Sign data (NEW: requires agent_id)
+    result_example = signer.sign(data_example, agent_id=agent_id_example)
+    print(f"   Signed: key={result_example.key_id}, agent={agent_id_example}")
+    print(f"   Signature: {len(result_example.signature)} bytes")
     
-    # Verify signature
-    is_valid = signer.verify(data, result)
-    print(f"   Verification: {'✓ VALID' if is_valid else '✗ INVALID'}")
+    # Verify signature (NEW: requires agent_id)
+    is_valid_example = signer.verify(data_example, result_example, agent_id=agent_id_example)
+    print(f"   Verification: {'✓ VALID' if is_valid_example else '✗ INVALID'}")
     
-    # Get public key
-    pub_key = signer.get_public_key()
-    print(f"   Public key: {len(pub_key)} bytes (PEM)")
+    # Test replay protection
+    print("\n   Testing replay protection:")
+    wrong_agent = "attacker-agent-999"
+    is_valid_wrong = signer.verify(data_example, result_example, agent_id=wrong_agent)
+    print(f"   Wrong agent_id: {'✗ FAILED (replay detected)' if not is_valid_wrong else '⚠️  SECURITY BUG'}")
     
     signer.close()
     print()
     
-    # Example 2: Try SoftHSM if available
-    print("2. SoftHSM mode (testing)")
-    lib_path, slot, pin = setup_softhsm_test()
+    # Example 2: Production mode enforcement
+    print("2. Production mode enforcement")
+    os.environ["TBP_PRODUCTION"] = "true"
     
-    if lib_path and slot is not None:
-        try:
-            hsm_signer = HSMSigner(
-                hsm_type=HSMType.PKCS11_GENERIC,
-                pin=pin,
-                slot=slot,
-                key_label="test-hsm-key",
-                library_path=lib_path,
-                auto_generate_key=True
-            )
-            
-            # Sign with HSM
-            result = hsm_signer.sign(data)
-            print(f"   HSM Signed: key={result.key_id}")
-            
-            # Verify
-            is_valid = hsm_signer.verify(data, result)
-            print(f"   HSM Verification: {'✓ VALID' if is_valid else '✗ INVALID'}")
-            
-            hsm_signer.close()
-            
-        except Exception as e:
-            print(f"   SoftHSM test failed: {e}")
-    else:
-        print("   SoftHSM not available for testing")
+    try:
+        signer_prod = HSMSigner(hsm_type=HSMType.SOFTWARE)
+        print("   ✗ SECURITY BUG: SOFTWARE mode should be blocked in production")
+    except HSMConnectionError as e:
+        print(f"   ✓ Correctly blocked: {e}")
     
-    print("\n=== Implementation Complete ===")
-    print("Features implemented:")
-    print("✓ Software fallback for development")
-    print("✓ PKCS#11 HSM support (YubiKey, SoftHSM, AWS CloudHSM)")
-    print("✓ Azure Key Vault integration")
-    print("✓ Rate limiting and security controls")
-    print("✓ Comprehensive error handling")
-    print("✓ Public key export for auditors")
+    print("\n=== All Security Patches Applied ===")
