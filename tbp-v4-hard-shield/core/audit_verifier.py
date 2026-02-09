@@ -1073,7 +1073,50 @@ def example_auditor_workflow():
 
     return audit_package
 
+def generate_markdown_report(self, result: VerificationResult, output_path: str = "audit_report.md"):
+    """
+    Transforme un résultat de vérification en rapport d'audit humainement lisible.
+    """
+    if not result.is_valid:
+        status_header = "# ❌ ÉCHEC DE L'AUDIT : INTÉGRITÉ COMPROMISE"
+        color = "red"
+    else:
+        status_header = "# ✅ RAPPORT D'AUDIT DE CONFORMITÉ"
+        color = "green"
 
+    details = result.details
+    
+    report = f"""{status_header}
+**Généré le :** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+**Moteur de vérification :** TBP-Verifier-v4.2 (Indépendant)
+
+---
+
+## 1. Analyse de l'Intégrité
+Le vérificateur a analysé la preuve Merkle fournie contre la racine publique.
+
+* **Index de l'entrée :** `{details.get('merkle_index', 'N/A')}`
+* **Hash de l'entrée (Leaf) :** `{details.get('entry_hash', 'N/A')}`
+* **Racine attendue :** `{details.get('expected_root', 'N/A')}`
+* **Statut de la structure :** {"VALIDE" if result.is_valid else "CORROMPUE"}
+
+## 2. Métadonnées de l'Entrée
+| Attribut | Valeur |
+| :--- | :--- |
+| **Horodatage** | `{details.get('timestamp', 'N/A')}` |
+| **Algorithme** | `{self.hash_algo.value}` |
+| **Niveaux de preuve** | `{details.get('proof_length', 0)}` |
+
+## 3. Conclusion Technique
+> {result.reason}
+
+---
+**Note de sécurité :** Ce document est le résultat d'un calcul de hachage déterministe. 
+Toute modification de ce fichier Markdown peut être détectée en comparant le Hash de l'entrée ci-dessus avec le log original.
+"""
+    with open(output_path, "w", encoding="utf-8") as f:
+        f.write(report)
+    print(f"📄 Rapport d'audit généré : {output_path}")
 
 if __name__ == "__main__":
 
