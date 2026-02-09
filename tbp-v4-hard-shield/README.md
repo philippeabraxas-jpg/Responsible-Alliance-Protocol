@@ -112,9 +112,9 @@ pytest tests/ -v
 - [x] Threat model documentation
 - [x] Directory structure
 - [x] Stubs for core modules
-
-### 🚧 In Progress
 - [x] HSM signer implementation (see core/hsm_signer.py)
+      
+### 🚧 In Progress
 - [ ] Merkle audit chain (see core/merkle_audit.py)
 - [ ] Pattern analysis engine
 - [ ] Rate limiting infrastructure
