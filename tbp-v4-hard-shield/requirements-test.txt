@@ -4,9 +4,12 @@ pytest-cov>=4.0.0          # Pour mesurer la couverture du code (les 80%)
 pytest-benchmark>=4.0.0    # Pour les tests de latence (< 10ms)
 
 # --- Dépendances du Projet ---
-cryptography>=42.0.0       # Pour le fallback v4.1 et la gestion des clés
+asn1crypto>=1.5.0      
+cryptography>=42.0.0   # Pour la couche de base
+pytest>=7.0.0          # Pour lancer les tests
+python-dateutil>=2.8.2 # Pour les logs Merkle
 requests>=2.31.0           # Pour les appels aux APIs OPA et TSA
-python-dateutil>=2.8.2     # Pour la gestion précise des timestamps Merkle
+
 
 # --- Simulation Adversariale ---
 requests-mock>=1.11.0      # Pour simuler des pannes réseau ou des timeouts
