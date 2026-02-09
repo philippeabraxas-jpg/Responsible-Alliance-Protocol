@@ -317,9 +317,10 @@ class TimeAttester:
         """
         if not ASN1_AVAILABLE and tsa_type != TSAType.MOCK:
             raise ImportError(
-                "asn1crypto required for RFC 3161. "
-                "Install with: pip install asn1crypto"
-            )
+            "asn1crypto required for RFC 3161 compliance.\n"
+            "Install with: pip install asn1crypto\n"
+            "Or use TSAType.MOCK for testing without network."
+        )
         
         self.tsa_type = tsa_type
         self.hash_algorithm = hash_algorithm.lower()
@@ -740,6 +741,36 @@ class TimeAttester:
     def verify_timestamp(self, data: bytes, token: TimestampToken) -> bool:
         """Verify timestamp token"""
         return token.verify(data)
+        
+    def _validate_tsa_certificate(self, cert: x509.Certificate) -> bool:
+    """Validate TSA certificate (basic checks)"""
+    now = datetime.now(timezone.utc)
+    
+    # Check validity period
+    if not (cert.not_valid_before <= now <= cert.not_valid_after):
+        return False
+    
+    # Check key usage (must include digitalSignature)
+    try:
+        key_usage = cert.extensions.get_extension_for_oid(
+            ExtensionOID.KEY_USAGE
+        ).value
+        if not key_usage.digital_signature:
+            return False
+    except x509.ExtensionNotFound:
+        logger.warning("TSA certificate missing key usage extension")
+    
+    # Check extended key usage (should include timeStamping)
+    try:
+        ext_key_usage = cert.extensions.get_extension_for_oid(
+            ExtensionOID.EXTENDED_KEY_USAGE
+        ).value
+        if x509.ObjectIdentifier("1.3.6.1.5.5.7.3.8") not in ext_key_usage:
+            logger.warning("TSA certificate missing timeStamping EKU")
+    except x509.ExtensionNotFound:
+        logger.warning("TSA certificate missing extended key usage")
+    
+    return True
     
     def get_metrics(self) -> Dict[str, Any]:
         """Get metrics"""
