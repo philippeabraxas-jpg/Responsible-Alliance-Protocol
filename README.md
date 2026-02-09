@@ -654,6 +654,7 @@ python examples/langchain_quickstart.py
 ---
 
 <div align="center">
+<img width="1024" height="1024" alt="image" src="https://github.com/user-attachments/assets/f87975c8-98aa-4a7e-b75d-97ae54f7fba0" />
 
 **Built with urgency. Validated by consensus. Ready for adoption.**
 
