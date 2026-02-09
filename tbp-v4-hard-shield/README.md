@@ -113,11 +113,11 @@ pytest tests/ -v
 - [x] Directory structure
 - [x] Stubs for core modules
 - [x] HSM signer implementation (see core/hsm_signer.py)
+- [x] Merkle audit chain (see core/merkle_audit.py)
+- [x] Pattern analysis engine
+- [x] Rate limiting infrastructure
       
 ### 🚧 In Progress
-- [ ] Merkle audit chain (see core/merkle_audit.py)
-- [ ] Pattern analysis engine
-- [ ] Rate limiting infrastructure
 
 ### ⏳ Planned
 - [ ] Adversarial test suite
