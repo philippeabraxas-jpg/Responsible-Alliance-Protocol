@@ -125,7 +125,40 @@ class HashAlgorithm(Enum):
 
     SHA512 = "sha512"
 
-
+class CompatibleAuditVerifier(AuditVerifier):
+    def verify_your_format(
+        self,
+        log_entry: Dict[str, Any],
+        merkle_proof: List[str],  # Format simplifié (liste de hashes)
+        merkle_index: int,
+        public_root: str
+    ) -> VerificationResult:
+        
+        # 1. Extraction et Normalisation
+        header = log_entry.get("header", {})
+        entry_metadata = {
+            "hash": header.get("hash"),
+            "previous_hash": header.get("previous_hash"),
+            "timestamp": header.get("timestamp"),
+            "signature": log_entry.get("signature") 
+        }
+        
+        # 2. Reconstitution critique de la direction (Algorithme Binaire)
+        # On déduit si le sibling est à gauche ou à droite via l'index
+        proof_with_direction = []
+        temp_index = merkle_index
+        for sibling_hash in merkle_proof:
+            is_left = (temp_index % 2 == 1) # Si l'index est impair, le frère est à gauche
+            proof_with_direction.append((sibling_hash, is_left))
+            temp_index //= 2 # On monte d'un étage dans l'arbre
+            
+        return self.verify_full_proof(
+            entry_data=log_entry.get("payload", {}),
+            entry_metadata=entry_metadata,
+            merkle_proof=proof_with_direction,
+            merkle_index=merkle_index,
+            published_root=public_root
+        )
 
 class AuditVerifier:
 
