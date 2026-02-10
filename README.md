@@ -500,7 +500,7 @@ See [Issues](https://github.com/philippeabraxas-jpg/Responsible-Alliance-Protoco
 - ⏳ Distributed enforcement
 - ⏳ Real-time threat intelligence
 
-📄 **Full Roadmap:** [ROADMAP.md](ROADMAP.md) *(to be created)*
+📄 **Full Roadmap:** [ROADMAP.md](Roadmap.md) 
 
 ---
 
