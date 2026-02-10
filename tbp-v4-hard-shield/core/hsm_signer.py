@@ -612,7 +612,7 @@ class HSMSigner:
             self._rate_limit_counter = 0
             self._rate_limit_reset = now
         
-        if self._rate_limit_counter > 100:  # Max 100 operations per minute
+        if self._rate_limit_counter >= 100:  # Max 100 operations per minute
             raise HSMSigningError("Rate limit exceeded")
         
         self._rate_limit_counter += 1

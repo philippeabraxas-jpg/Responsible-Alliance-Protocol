@@ -204,8 +204,9 @@ class TestErrorHandling:
     def test_no_tsa_servers(self):
         """Test error when no servers configured"""
         # This should not happen in practice, but test it
+        # Use a non-MOCK type to trigger the check
         with pytest.raises(TSAConnectionError, match="No TSA servers"):
-            attester = TimeAttester(tsa_type=TSAType.MOCK)
+            attester = TimeAttester(tsa_type=TSAType.FREETSA)
             attester.tsa_servers = []  # Force empty
             attester.get_timestamp(b"test")
 
@@ -283,10 +284,6 @@ class TestRealTSA:
     Skip with: pytest -m "not network"
     """
     
-    @pytest.mark.skipif(
-        not pytest.config.getoption("--run-network-tests", default=False),
-        reason="Network tests disabled (use --run-network-tests to enable)"
-    )
     def test_freetsa_real(self):
         """Test with real FreeTSA server"""
         try:
@@ -327,10 +324,6 @@ class TestRealTSA:
         finally:
             attester.close()
     
-    @pytest.mark.skipif(
-        not pytest.config.getoption("--run-network-tests", default=False),
-        reason="Network tests disabled"
-    )
     def test_multiple_tsa_servers(self):
         """Test failover between TSA servers"""
         try:

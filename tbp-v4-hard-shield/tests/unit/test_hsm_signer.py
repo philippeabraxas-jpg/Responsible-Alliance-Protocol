@@ -25,14 +25,14 @@ class TestSoftwareMode:
         signer = HSMSigner(hsm_type=HSMType.SOFTWARE)
         
         data = b"Test log entry"
-        result = signer.sign(data)
+        result = signer.sign(data, "test-agent")
         
         assert isinstance(result, SigningResult)
         assert len(result.signature) > 0
         assert result.key_id.startswith("software-")
         
         # Verify
-        assert signer.verify(data, result) == True
+        assert signer.verify(data, result, "test-agent") == True
         signer.close()
     
     def test_verify_tampered_data_fails(self):
@@ -40,13 +40,13 @@ class TestSoftwareMode:
         signer = HSMSigner(hsm_type=HSMType.SOFTWARE)
         
         data = b"Original data"
-        result = signer.sign(data)
+        result = signer.sign(data, "test-agent")
         
         # Tamper with data
         tampered = b"Tampered data"
         
         # Should fail verification
-        assert signer.verify(tampered, result) == False
+        assert signer.verify(tampered, result, "test-agent") == False
         signer.close()
     
     def test_verify_tampered_signature_fails(self):
@@ -54,7 +54,7 @@ class TestSoftwareMode:
         signer = HSMSigner(hsm_type=HSMType.SOFTWARE)
         
         data = b"Test data"
-        result = signer.sign(data)
+        result = signer.sign(data, "test-agent")
         
         # Tamper with signature
         tampered_result = SigningResult(
@@ -66,7 +66,7 @@ class TestSoftwareMode:
         )
         
         # Should fail verification
-        assert signer.verify(data, tampered_result) == False
+        assert signer.verify(data, tampered_result, "test-agent") == False
         signer.close()
     
     def test_public_key_export(self):
@@ -87,11 +87,11 @@ class TestSoftwareMode:
         
         # Should allow 100 operations
         for i in range(100):
-            signer.sign(data)
+            signer.sign(data, "test-agent")
         
         # 101st should fail
         with pytest.raises(HSMSigningError, match="Rate limit"):
-            signer.sign(data)
+            signer.sign(data, "test-agent")
         
         signer.close()
     
@@ -102,10 +102,10 @@ class TestSoftwareMode:
         data = b"Test data"
         
         # Sign with timestamp 1
-        result1 = signer.sign(data, timestamp=1000.0)
+        result1 = signer.sign(data, "test-agent", timestamp=1000.0)
         
         # Sign same data with timestamp 2
-        result2 = signer.sign(data, timestamp=2000.0)
+        result2 = signer.sign(data, "test-agent", timestamp=2000.0)
         
         # Signatures should differ (timestamp is included)
         assert result1.signature != result2.signature
@@ -116,8 +116,8 @@ class TestSoftwareMode:
         """Test context manager closes session"""
         with HSMSigner(hsm_type=HSMType.SOFTWARE) as signer:
             data = b"Test"
-            result = signer.sign(data)
-            assert signer.verify(data, result) == True
+            result = signer.sign(data, "test-agent")
+            assert signer.verify(data, result, "test-agent") == True
         
         # Session should be closed after context exit
 
@@ -128,19 +128,26 @@ class TestSoftHSM:
     def softhsm_setup(self):
         """Setup SoftHSM for testing"""
         from core.hsm_signer import setup_softhsm_test
-        lib_path, slot, pin, cleanup = setup_softhsm_test()
+        result = setup_softhsm_test()
+        
+        # Handle both 3-tuple and 4-tuple returns
+        if len(result) == 3:
+            lib_path, slot, pin = result
+            cleanup = lambda: None
+        else:
+            lib_path, slot, pin, cleanup = result
         
         if lib_path is None:
             pytest.skip("SoftHSM2 not installed")
         
-        yield lib_path, slot, pin
+        yield lib_path, slot, pin, cleanup
         
         # Cleanup
         cleanup()
     
     def test_softhsm_connection(self, softhsm_setup):
         """Test connection to SoftHSM"""
-        lib_path, slot, pin = softhsm_setup
+        lib_path, slot, pin, cleanup = softhsm_setup
         
         signer = HSMSigner(
             hsm_type=HSMType.PKCS11_GENERIC,
@@ -158,7 +165,7 @@ class TestSoftHSM:
     
     def test_softhsm_sign_verify(self, softhsm_setup):
         """Test sign/verify with SoftHSM"""
-        lib_path, slot, pin = softhsm_setup
+        lib_path, slot, pin, cleanup = softhsm_setup
         
         signer = HSMSigner(
             hsm_type=HSMType.PKCS11_GENERIC,
@@ -170,10 +177,10 @@ class TestSoftHSM:
         )
         
         data = b"HSM test data"
-        result = signer.sign(data)
+        result = signer.sign(data, "test-agent")
         
         assert result.hsm_type == "pkcs11"
-        assert signer.verify(data, result) == True
+        assert signer.verify(data, result, "test-agent") == True
         
         signer.close()
 
@@ -216,7 +223,7 @@ class TestErrorHandling:
     
     def test_missing_pkcs11_library(self):
         """Test error when PKCS#11 library not found"""
-        with pytest.raises(HSMConnectionError, match="library not found"):
+        with pytest.raises(HSMConnectionError, match="python-pkcs11 library not installed|PKCS#11 library not found"):
             HSMSigner(
                 hsm_type=HSMType.YUBIKEY,
                 library_path="/nonexistent/path.so"
