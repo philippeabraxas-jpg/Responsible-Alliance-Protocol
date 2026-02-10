@@ -1,4 +1,15 @@
 # tbp_signature_service.py
+import logging
+import json
+from datetime import datetime, timezone
+from typing import Dict, Any, Optional
+
+# Local imports
+from core.hsm_signer import HSMSigner
+from core.merkle_audit import MerkleAuditChain
+
+logger = logging.getLogger(__name__)
+
 class TBPFullAuditSystem:
     """Système complet d'audit TBP avec HSM + TSA + Merkle"""
     
