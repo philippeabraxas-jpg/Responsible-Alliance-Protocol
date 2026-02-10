@@ -75,12 +75,19 @@ class TBPLogSigner:
     def sign_log(self, log_data: Dict[str, Any]) -> Dict[str, Any]:
         """Signe un log (Interface v4.1, mais moteur v4.2)"""
         if self.mode == "v4.2-hsm":
-            entry = self.chain.append(log_data)
-            signature = self.signer.sign(entry.hash.encode())
+            # append returns the string hash of the new entry
+            entry_hash = self.chain.append(log_data)
+            
+            # get the last entry to access previous_hash
+            entry = self.chain.entries[-1]
+            
+            # signer returns a SigningResult object
+            signing_result = self.signer.sign(entry_hash.encode())
+            
             return {
                 "version": "4.2",
                 "data": log_data,
-                "signature": signature.hex(),
+                "signature": signing_result.signature.hex(),
                 "merkle_root": self.chain.get_root(),
                 "previous_hash": entry.previous_hash
             }

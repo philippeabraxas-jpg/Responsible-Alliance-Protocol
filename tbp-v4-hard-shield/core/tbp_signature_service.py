@@ -1,4 +1,3 @@
-# tbp_signature_service.py
 import logging
 import json
 from datetime import datetime, timezone
@@ -10,6 +9,7 @@ from core.merkle_audit import MerkleAuditChain
 
 logger = logging.getLogger(__name__)
 
+# tbp_signature_service.py
 class TBPFullAuditSystem:
     """Système complet d'audit TBP avec HSM + TSA + Merkle"""
     

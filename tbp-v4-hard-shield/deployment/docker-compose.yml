@@ -20,7 +20,7 @@ services:
       - "--log-format=json"
       - "/policies"
     volumes:
-      - ./policies:/policies:ro
+      - ./policy_engine:/policies:ro
       - ./data:/data
     networks:
       - tbp-network
