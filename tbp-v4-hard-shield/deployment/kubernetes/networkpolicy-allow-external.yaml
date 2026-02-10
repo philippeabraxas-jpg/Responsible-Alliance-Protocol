@@ -1,0 +1,35 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-tsa-egress
+  namespace: tbp-system
+spec:
+  # On applique cette règle uniquement aux pods qui font l'audit
+  podSelector:
+    matchLabels:
+      tbp-client: "true"
+  
+  policyTypes:
+    - Egress
+
+  egress:
+    # 1. Autoriser le DNS (déjà fait, mais crucial de le maintenir)
+    - to:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+    
+    # 2. AUTORISER LE TSA (L'ajout critique)
+    # Permet de sortir sur Internet pour contacter l'horodateur (ex: DigiCert)
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0 
+      ports:
+        - protocol: TCP
+          port: 443
+        - protocol: TCP
+          port: 80

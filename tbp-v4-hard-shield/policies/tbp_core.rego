@@ -65,7 +65,38 @@ finance_action_allowed if {
     input.human_approved == true
     approval_timestamp_valid
 }
+# =============================================================================
+# CUMULATIVE TRACKING (Anti-Salami Protection)
+# =============================================================================
 
+# Bloquer si le cumul des 24 dernières heures dépasse le seuil critique
+blocked_by_f_stability if {
+    input.domain == "finance"
+    cumulative_value_24h_exceeded
+}
+
+# Seuil d'alerte pour les micro-transactions cumulées
+# Si la somme des transactions dépasse 50k$ en 24h sans approbation humaine
+cumulative_value_24h_exceeded if {
+    input.cumulative_24h_value + input.transaction_value > 50000
+    not input.human_approved
+}
+
+# Détection de fréquence (Anomalie statistique)
+# Si plus de 100 micro-transactions ont eu lieu en une heure
+blocked_by_f_stability if {
+    input.domain == "finance"
+    input.transaction_count_1h > 100
+    input.average_transaction_value < 100 # Comportement typique "Salami"
+}
+
+# =============================================================================
+# REASONS UPDATE (Feedback)
+# =============================================================================
+
+denial_reason := "F-STABILITY breach: Cumulative 24h threshold exceeded (Salami Attack prevention)" if {
+    cumulative_value_24h_exceeded
+}
 # =============================================================================
 # I-INTEGRITY: Infrastructure Integrity
 # =============================================================================

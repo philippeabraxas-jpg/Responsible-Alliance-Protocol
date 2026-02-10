@@ -29,3 +29,4 @@ resources:
   # 6. Security policies (apply last)
   - networkpolicy-deny-all.yaml
   - networkpolicy-allow-opa.yaml
+  - networkpolicy-allow-external.yaml
