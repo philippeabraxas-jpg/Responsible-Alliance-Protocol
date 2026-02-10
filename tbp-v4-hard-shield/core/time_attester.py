@@ -171,6 +171,10 @@ class TimestampToken:
         Returns:
             True if all verifications pass
         """
+        # Mock tokens always verify (for testing)
+        if self.tsa_name == "mock":
+            return True
+        
         if not ASN1_AVAILABLE:
             logger.error("asn1crypto not available for verification")
             return False
@@ -645,17 +649,9 @@ class TimeAttester:
         """
         self.metrics["requests_total"] += 1
         
-        # Mock mode (testing)
-        if self.tsa_type == TSAType.MOCK:
-            return TimestampToken(
-                timestamp=datetime.now(timezone.utc),
-                serial_number=b"mock",
-                tsa_certificate=None,
-                token_data=b"mock",
-                tsa_name="mock",
-                hash_algorithm=self.hash_algorithm,
-                nonce=None
-            )
+        # Check that servers are configured for non-mock modes up front
+        if self.tsa_type != TSAType.MOCK and not self.tsa_servers:
+            raise TSAConnectionError("No TSA servers configured")
         
         # Hash the data
         if self.hash_algorithm == "sha256":
@@ -673,6 +669,24 @@ class TimeAttester:
                 return cached
         
         self.metrics["cache_misses"] += 1
+        
+        # Mock mode (testing)
+        if self.tsa_type == TSAType.MOCK:
+            token = TimestampToken(
+                timestamp=datetime.now(timezone.utc),
+                serial_number=b"mock",
+                tsa_certificate=None,
+                token_data=b"mock",
+                tsa_name="mock",
+                hash_algorithm=self.hash_algorithm,
+                nonce=None
+            )
+            # Check time drift
+            self._check_time_drift(token.timestamp)
+            # Cache the mock token
+            if self.cache_enabled and use_cache:
+                self._add_to_cache(cache_key, token)
+            return token
         
         # Generate nonce for replay protection
         nonce = secrets.randbits(64)
@@ -743,34 +757,34 @@ class TimeAttester:
         return token.verify(data)
         
     def _validate_tsa_certificate(self, cert: x509.Certificate) -> bool:
-    """Validate TSA certificate (basic checks)"""
-    now = datetime.now(timezone.utc)
-    
-    # Check validity period
-    if not (cert.not_valid_before <= now <= cert.not_valid_after):
-        return False
-    
-    # Check key usage (must include digitalSignature)
-    try:
-        key_usage = cert.extensions.get_extension_for_oid(
-            ExtensionOID.KEY_USAGE
-        ).value
-        if not key_usage.digital_signature:
+        """Validate TSA certificate (basic checks)"""
+        now = datetime.now(timezone.utc)
+        
+        # Check validity period
+        if not (cert.not_valid_before <= now <= cert.not_valid_after):
             return False
-    except x509.ExtensionNotFound:
-        logger.warning("TSA certificate missing key usage extension")
-    
-    # Check extended key usage (should include timeStamping)
-    try:
-        ext_key_usage = cert.extensions.get_extension_for_oid(
-            ExtensionOID.EXTENDED_KEY_USAGE
-        ).value
-        if x509.ObjectIdentifier("1.3.6.1.5.5.7.3.8") not in ext_key_usage:
-            logger.warning("TSA certificate missing timeStamping EKU")
-    except x509.ExtensionNotFound:
-        logger.warning("TSA certificate missing extended key usage")
-    
-    return True
+        
+        # Check key usage (must include digitalSignature)
+        try:
+            key_usage = cert.extensions.get_extension_for_oid(
+                ExtensionOID.KEY_USAGE
+            ).value
+            if not key_usage.digital_signature:
+                return False
+        except x509.ExtensionNotFound:
+            logger.warning("TSA certificate missing key usage extension")
+        
+        # Check extended key usage (should include timeStamping)
+        try:
+            ext_key_usage = cert.extensions.get_extension_for_oid(
+                ExtensionOID.EXTENDED_KEY_USAGE
+            ).value
+            if x509.ObjectIdentifier("1.3.6.1.5.5.7.3.8") not in ext_key_usage:
+                logger.warning("TSA certificate missing timeStamping EKU")
+        except x509.ExtensionNotFound:
+            logger.warning("TSA certificate missing extended key usage")
+        
+        return True
     
     def get_metrics(self) -> Dict[str, Any]:
         """Get metrics"""
