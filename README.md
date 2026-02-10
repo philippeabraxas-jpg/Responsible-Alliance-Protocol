@@ -531,7 +531,7 @@ TBP is open-source to maximize adoption and enable independent verification.
 
 - **GitHub Issues:** [Report bugs, request features](https://github.com/philippeabraxas-jpg/Responsible-Alliance-Protocol/issues)
 - **GitHub Discussions:** [Ask questions, share ideas](https://github.com/philippeabraxas-jpg/Responsible-Alliance-Protocol/discussions)
-- **Discord:** *Coming soon*
+- **Discord:** [TBP_Join-us](https://discord.com/channels/1469730462527131815/1469730463080907059)
 
 ### Citation
 
