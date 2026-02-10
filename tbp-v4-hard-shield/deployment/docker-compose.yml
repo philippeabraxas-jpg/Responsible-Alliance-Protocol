@@ -1,8 +1,7 @@
 # TBP-V4.0 Docker Compose Deployment
 # Complete stack with OPA and example applications
-#issue10 fixed
 
-version: '3.8'  # Corrigé : Version valide
+version: '3.8'
 
 services:
   # =============================================================================
@@ -21,7 +20,7 @@ services:
       - "--log-format=json"
       - "/policies"
     volumes:
-      - ./policies:/policies:ro
+      - ./policy_engine:/policies:ro
       - ./data:/data
     networks:
       - tbp-network
@@ -118,7 +117,7 @@ networks:
   tbp-network:
     driver: bridge
 
-volumes:  
+volumes:
   prometheus-data:
   grafana-data:
   postgres-data:
