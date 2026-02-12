@@ -474,13 +474,13 @@ docker-compose up -d
 kubectl apply -f tbp-v4-hard-shield/deployment/kubernetes/
 ```
 
-### Cloud Platforms
+### Cloud Platforms (To Build...)
 
-- **AWS:** CloudHSM + Secrets Manager integration
-- **Azure:** Key Vault + managed identities
-- **GCP:** Cloud HSM + Secret Manager
+- **AWS:** See [deployment/aws/](tbp-v4-hard-shield/deployment/aws/)
+- **Azure:** See [deployment/azure/](tbp-v4-hard-shield/deployment/azure/)
+- **GCP:** See [deployment/gcp/](tbp-v4-hard-shield/deployment/gcp/)
 
-📄 **Full Guide:** [Deployment Documentation](tbp-v4-hard-shield/docs/DEPLOYMENT.md)
+📄 **Full Guide:** [V4.0 Deployment Documentation](tbp-v4-hard-shield/DEPLOYMENT.md)
 
 ---
 
@@ -572,7 +572,8 @@ TBP is open-source to maximize adoption and enable independent verification.
 
 - **GitHub Issues:** [Report bugs, request features](https://github.com/philippeabraxas-jpg/Responsible-Alliance-Protocol/issues)
 - **GitHub Discussions:** [Ask questions, share ideas](https://github.com/philippeabraxas-jpg/Responsible-Alliance-Protocol/discussions)
-
+- **Discord:** [Ask questions, share ideas](https://discord.com/channels/1469730462527131815/1469730463080907059)
+  
 ### Citation
 
 ```bibtex
