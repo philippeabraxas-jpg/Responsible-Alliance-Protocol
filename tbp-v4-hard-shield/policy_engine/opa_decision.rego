@@ -25,9 +25,6 @@ allow if {
     not blocked_by_f_stability
     not blocked_by_i_integrity
     not blocked_by_w_monopoly
-    
-    # Log the decision for audit
-    log_decision("ALLOW", "All invariants passed")
 }
 
 # =============================================================================
@@ -262,7 +259,7 @@ context_hash := sprintf("%x", [input])
 # Log helper function
 log_decision(decision, reason) := true if {
     # In production, this would write to audit system
-    trace(sprintf("TBP Decision: %s - %s - %v", [decision, reason, decision_log]))
+    trace(sprintf("TBP Decision: %s - %s", [decision, reason]))
 }
 
 # =============================================================================
