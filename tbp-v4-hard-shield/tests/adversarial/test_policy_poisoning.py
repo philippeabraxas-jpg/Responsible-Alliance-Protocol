@@ -13,10 +13,11 @@ import hashlib
 # TODO: Importer vos modules
 # from policies.loader import load_policy  # Si vous avez un loader
 
+
 def test_detect_modified_policy():
     """
     Test que TBP détecte les policies modifiées.
-    
+
     Scénario:
     1. Créer policy avec hash connu
     2. Attaquant modifie policy
@@ -27,7 +28,7 @@ def test_detect_modified_policy():
     # 2. Calculer son hash
     # 3. Modifier le contenu
     # 4. Vérifier que load_policy() échoue
-    
+
     pytest.skip("TODO: Implement policy poisoning test")
 
 

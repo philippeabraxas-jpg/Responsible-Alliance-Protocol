@@ -4,12 +4,14 @@ from core.hsm_signer import HSMSigner, HSMType
 from core.merkle_audit import MerkleAuditChain
 from policy_engine.enforcer import TBPEnforcer
 
+
 def test_full_chain_validation():
     """
     Test E2E : Action -> Signature HSM -> Validation OPA -> Ancrage Merkle
     """
     # 1. Setup des composants
     import os
+
     if os.path.exists("tests/temp_audit.json"):
         os.remove("tests/temp_audit.json")
     signer = HSMSigner(hsm_type=HSMType.SOFTWARE)
@@ -20,7 +22,7 @@ def test_full_chain_validation():
     action = {
         "agent_id": "trusted-bot-01",
         "action_type": "access_database",
-        "resource": "hr_records"
+        "resource": "hr_records",
     }
 
     # 3. Signature (Preuve d'identité)
@@ -34,13 +36,14 @@ def test_full_chain_validation():
 
     # 5. Ancrage dans la chaîne d'audit (Immuabilité)
     audit_chain.append(action, signature=signing_result.signature)
-    
+
     # 6. Vérification finale de l'intégrité de la chaîne
     is_valid, _ = audit_chain.verify_integrity()
     assert is_valid is True
     assert len(audit_chain.entries) == 1
-    
+
     print("✅ Intégration End-to-End validée avec succès.")
+
 
 if __name__ == "__main__":
     test_full_chain_validation()

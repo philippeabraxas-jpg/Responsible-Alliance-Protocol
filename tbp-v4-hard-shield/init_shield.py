@@ -22,14 +22,15 @@ sys.path.append(str(Path(__file__).parent))
 from core.merkle_audit import MerkleAuditChain
 from core.hsm_signer import HSMSigner, HSMType
 
-logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
+logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger("TBP-Init")
+
 
 def check_opa_policies():
     """Verify OPA policy syntax before activation."""
     logger.info("Verifying OPA policies...")
     policy_dirs = ["policy_engine", "policies"]
-    
+
     opa_executable = "opa"
     try:
         for p_dir in policy_dirs:
@@ -38,9 +39,7 @@ def check_opa_policies():
                 logger.info(f"Checking directory: {p_dir}")
                 # Run 'opa check' on the directory
                 result = subprocess.run(
-                    [opa_executable, "check", str(p_path)],
-                    capture_output=True,
-                    text=True
+                    [opa_executable, "check", str(p_path)], capture_output=True, text=True
                 )
                 if result.returncode != 0:
                     logger.error(f"OPA validation failed for {p_dir}:\n{result.stderr}")
@@ -49,19 +48,22 @@ def check_opa_policies():
         return True
     except FileNotFoundError:
         logger.warning("⚠️ 'opa' executable not found. Skipping syntax validation.")
-        logger.info("Please install OPA (https://www.openpolicyagent.org/docs/latest/#installation) for production.")
-        return True # Don't block dev if OPA missing, but warn
+        logger.info(
+            "Please install OPA (https://www.openpolicyagent.org/docs/latest/#installation) for production."
+        )
+        return True  # Don't block dev if OPA missing, but warn
+
 
 def generate_genesis_dashboard(data_dir: Path, chain: MerkleAuditChain):
     """Generate a simple HTML dashboard for the Genesis state."""
     logger.info("Generating Genesis Dashboard...")
-    
+
     dashboard_path = data_dir / "genesis_dashboard.html"
-    
+
     try:
         root_hash = chain.get_root()
         entry_count = len(chain)
-        
+
         html_content = f"""
 <!DOCTYPE html>
 <html lang="en">
@@ -110,9 +112,10 @@ def generate_genesis_dashboard(data_dir: Path, chain: MerkleAuditChain):
     except Exception as e:
         logger.error(f"Failed to generate dashboard: {e}")
 
+
 def init_shield():
     print("--- TBP v4.2 'Shield-Hardening' Initialization ---\n")
-    
+
     # 1. Directory Setup
     data_dir = Path(__file__).parent / "data"
     data_dir.mkdir(exist_ok=True)
@@ -125,10 +128,14 @@ def init_shield():
     # 3. HSM Check / Initialization
     try:
         logger.info("Checking HSM Signer status...")
-        hsm_type = HSMType.SOFTWARE if os.getenv("TBP_PRODUCTION", "false").lower() != "true" else HSMType.PKCS11_GENERIC
+        hsm_type = (
+            HSMType.SOFTWARE
+            if os.getenv("TBP_PRODUCTION", "false").lower() != "true"
+            else HSMType.PKCS11_GENERIC
+        )
         signer = HSMSigner(hsm_type=hsm_type)
         logger.info(f"HSM Signer initialized (Mode: {hsm_type}).")
-        
+
         # Export public key
         pub_key = signer.get_public_key()
         pub_key_path = data_dir / "tbp_public_key.pem"
@@ -143,14 +150,14 @@ def init_shield():
     try:
         chain_path = data_dir / "audit_chain.json"
         chain = MerkleAuditChain(storage_path=str(chain_path))
-        
+
         if len(chain) == 0:
             logger.info("Initializing Merkle Audit Chain (Genesis)...")
             genesis_data = {
                 "event": "GENESIS",
                 "version": "4.2.1",
                 "message": "Responsible Alliance Protocol - Shield Hardening Activated",
-                "timestamp": datetime.now(timezone.utc).isoformat()
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }
             # Sign with HSM if possible
             signature = signer.sign(json.dumps(genesis_data).encode(), "TBP-SYSTEM").signature
@@ -162,7 +169,7 @@ def init_shield():
 
         # 5. Dashboard Generation
         generate_genesis_dashboard(data_dir, chain)
-        
+
     except Exception as e:
         logger.error(f"Chain Initialization failed: {e}")
         return False
@@ -170,6 +177,7 @@ def init_shield():
     print("\n✅ TBP Shield v4.2 Initialized Successfully.")
     print(f"Ready to protect the 3 invariants: F-STABILITY, I-INTEGRITY, W-MONOPOLY.")
     return True
+
 
 if __name__ == "__main__":
     success = init_shield()

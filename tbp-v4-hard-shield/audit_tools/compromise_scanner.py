@@ -22,6 +22,7 @@ from audit_tools.verify_logs import AuditVerifier
 
 logger = logging.getLogger(__name__)
 
+
 class CompromiseScanner:
     def __init__(self, chain: MerkleAuditChain):
         self.chain = chain
@@ -31,11 +32,11 @@ class CompromiseScanner:
         """Verify every entry and link in the chain."""
         logger.info("Starting full chain compromise scan...")
         is_valid, errors = self.chain.verify_integrity(thorough=True)
-        
+
         return {
             "status": "SECURE" if is_valid else "COMPROMISED",
             "entries_scanned": len(self.chain),
-            "errors": errors
+            "errors": errors,
         }
 
     def verify_against_external_root(self, external_root: str) -> bool:
@@ -45,6 +46,7 @@ class CompromiseScanner:
             logger.critical(f"ROOT MISMATCH! Local: {local_root}, External: {external_root}")
             return False
         return True
+
 
 if __name__ == "__main__":
     print("TBP Compromise Scanner Stub")
