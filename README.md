@@ -523,7 +523,6 @@ We welcome contributions! Areas of focus:
 See [Issues](https://github.com/philippeabraxas-jpg/Responsible-Alliance-Protocol/issues):
 - **Help Wanted:** Cloud deployment guides ([#7](https://github.com/philippeabraxas-jpg/Responsible-Alliance-Protocol/issues/7))
 - **Help Wanted:** Translations FR/ES/CN ([#5](https://github.com/philippeabraxas-jpg/Responsible-Alliance-Protocol/issues/5))
-- **Help Wanted:** AutoGen enforcement ([open issue](https://github.com/philippeabraxas-jpg/Responsible-Alliance-Protocol/issues))
 
 📄 **Guidelines:** [CONTRIBUTING.md](CONTRIBUTING.md)
 
