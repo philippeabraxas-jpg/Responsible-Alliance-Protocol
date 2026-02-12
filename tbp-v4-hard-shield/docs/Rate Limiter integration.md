@@ -1,108 +1,119 @@
 🛡️ Rate Limiter + HSM Protection Guide
 Overview
 
-Le Rate Limiter protège les ressources critiques du TBP (notamment le processeur physique du HSM) contre la saturation. Contrairement à un limiteur classique, il est Agent-Aware : il utilise l'identité cryptographique issue du HSM pour appliquer des quotas par agent.
+Le Rate Limiter est un composant de résilience technique conçu pour protéger les ressources critiques du TBP — en particulier le processeur physique du HSM — contre la saturation ou le sabotage. Contrairement à un limiteur classique, il est Agent-Aware : il utilise l'identité cryptographique (agent_id) issue du HSM pour appliquer des quotas par agent.
 Architecture
+Extrait de code
 
-┌─────────────────┐
-│  Agent Request  │
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────────┐
-│    Rate Limiter     │  ◄── Protège le HSM (v4.2.1)
-│ (rate_limiter.py)   │
-└────────┬────────────┘
-         │
-         │ Token Validé ?
-         ▼
-┌─────────────────────┐
-│     HSM Signer      │  ◄── Opération coûteuse
-│  (hsm_signer.py)    │
-└────────┬────────────┘
-         │
-         ▼
-┌─────────────────────┐
-│    Audit System     │
-│   (Merkle Chain)    │  ◄── Log les alertes DoS
-└─────────────────────┘
+graph TD
+    A[Agent Request] --> B{Rate Limiter}
+    B -- Limit Exceeded --> C[Log DoS_ALERT to Merkle]
+    B -- Allowed --> D[HSM Signer]
+    D --> E[Record Signature in Merkle]
 
-Python Integration (Middleware Pattern)
-Implémentation du TBPEnforcer avec Protection HSM
+Flux :
+
+    La requête de l'agent arrive.
+
+    Le Rate Limiter vérifie les compteurs en mémoire pour cet agent_id.
+
+    Si le seuil est dépassé : l'action est bloquée et une alerte DoS_ALERT est inscrite dans la Merkle Audit Chain.
+
+    Si le seuil est respecté : l'appel au HSM Signer est autorisé.
+
+OPA & Integration Logic
+Protection des ressources physiques
+
+Le Rate Limiter agit comme une sentinelle avant l'entrée dans le moteur de politiques (OPA) ou l'appel au matériel (HSM).
+
+Configuration des seuils (v4.2.1) :
+Ressource	Action	Seuil (Secteur Public/Banque)	Justification
+HSM	sign	50 req/min	Évite la surchauffe/usure des puces physiques (YubiKey/CloudHSM).
+Enforcer	verify	1000 req/min	Empêche le déni de service logique sur le serveur de politiques.
+Audit	append	2000 req/min	Protège l'espace disque du journal d'audit Merkle.
+Python Integration
+Option 1: Middleware / Enforcer Pattern
 Python
 
 from policy_engine.rate_limiter import RateLimiter
 from core.hsm_signer import HSMSigner
 from core.merkle_audit import MerkleAuditChain
 
-class SecureTBPEnforcer:
+class TBPEnforcer:
     """
-    Enforcer sécurisé intégrant le Rate Limiting et la protection HSM.
+    Enforcer TBP avec protection anti-DoS intégrée.
     """
     def __init__(self, hsm: HSMSigner, audit_chain: MerkleAuditChain):
         self.hsm = hsm
         self.audit_chain = audit_chain
-        # Initialisation du limiteur lié à la chaîne d'audit
+        # Le limiter est directement lié à la chaîne d'audit
         self.limiter = RateLimiter(audit_chain=self.audit_chain)
-        
-    def sign_action(self, agent_id: str, action_data: dict):
+    
+    def secure_sign(self, agent_id: str, data: dict):
         """
-        Signe une action après vérification des quotas.
+        Signe une donnée uniquement si l'agent respecte ses quotas.
         """
-        # 1. Vérification du Rate Limit AVANT d'appeler le HSM
         if not self.limiter.check_limit(agent_id, action="sign"):
-            # L'alerte est déjà logguée dans Merkle par le limiter
-            raise PermissionError(f"HSM Protection: Rate limit exceeded for agent {agent_id}")
+            # L'alerte DoS_ALERT est déjà inscrite dans Merkle par le limiter
+            raise PermissionError(f"HSM Protection triggered: Agent {agent_id} rate-limited.")
+            
+        return self.hsm.sign(data, agent_id=agent_id)
 
-        # 2. Si OK, on procède à la signature physique
-        return self.hsm.sign(action_data, agent_id=agent_id)
+Option 2: Decorator Pattern (Expert)
+Python
 
-# Usage
-enforcer = SecureTBPEnforcer(hsm=my_hsm, audit_chain=my_chain)
+from functools import wraps
+from policy_engine.rate_limiter import RateLimiter
 
-try:
-    sig = enforcer.sign_action("bot-001", {"amount": 1000})
-except PermissionError as e:
-    print(f"🚨 Sabotage bloqué : {e}")
+# Global limiter instance
+_limiter = RateLimiter(audit_chain=global_audit_chain)
 
-Configuration des Quotas (Corporate Standard)
+def protect_hsm(func):
+    """
+    Décorateur pour protéger les méthodes consommant du HSM.
+    """
+    @wraps(func)
+    def wrapper(self, *args, **kwargs):
+        agent_id = getattr(self, 'agent_id', 'unknown')
+        
+        if not _limiter.check_limit(agent_id, action="sign"):
+            raise PermissionError(f"Rate limit exceeded for {agent_id}")
+            
+        return func(self, *args, **kwargs)
+    return wrapper
 
-Dans rate_limiter.py, nous utilisons des seuils différenciés pour équilibrer agilité et sécurité.
-Ressource	Action	Seuil (Default)	Justification
-HSM (Sign)	sign	50 req / min	Protège la puce physique contre l'échauffement/usure.
-OPA (Verify)	verify	1000 req / min	Protège le CPU contre les attaques par déni de service logique.
-Audit (Log)	log	2000 req / min	Empêche la saturation de l'espace disque de l'audit.
-OPA Integration (Optionnel)
+Testing & Validation
+Test : Détection de Sabotage
+Python
 
-Vous pouvez également passer l'état du Rate Limiter à OPA pour des décisions plus fines :
-Extrait de code
-
-package tbp.resilience
-
-# Bloque l'action si le Rate Limiter a détecté une anomalie persistante
-deny[msg] if {
-    input.rate_limit_status.is_flagged == true
-    msg := "Agent under temporary quarantine due to excessive requests."
-}
+def test_hsm_saturation_protection():
+    limiter = RateLimiter(audit_chain=mock_chain)
+    agent_id = "attacker_bot"
+    
+    # Simulation d'une attaque par saturation (Flood)
+    for i in range(100):
+        limiter.check_limit(agent_id, action="sign")
+        
+    # Vérification que le système a réagi
+    assert limiter.check_limit(agent_id, action="sign") is False
+    assert mock_chain.last_entry.data["event"] == "DoS_ALERT"
 
 Deployment Checklist
 
-    [ ] Placer rate_limiter.py dans policy_engine/
+    [ ] Installer rate_limiter.py dans le répertoire policy_engine/.
 
-    [ ] Injecter la MerkleAuditChain dans le constructeur du RateLimiter
+    [ ] Configurer les limites dans le fichier de config (défaut : 50 sign/min).
 
-    [ ] Configurer les seuils selon les capacités du HSM (YubiKey vs CloudHSM)
+    [ ] S'assurer que chaque rejet (False) est bien suivi d'un append dans la MerkleAuditChain.
 
-    [ ] Ajouter les tests unitaires (test_rate_limiter.py) au pipeline CI/CD
+    [ ] Tester la réinitialisation de la fenêtre de temps (Time Window Reset).
 
-    [ ] Vérifier que DoS_ALERT remonte bien dans le dashboard de surveillance
+Performance Considerations
 
-Monitoring & Alerting
+    Latence : L'impact sur la requête est négligeable (< 1ms) car les compteurs sont en mémoire.
 
-Le RateLimiter génère des entrées spécifiques dans la chaîne de Merkle. Voici comment les filtrer pour la surveillance :
-Python
+    Nettoyage : La liste des timestamps par agent est purgée à chaque appel pour éviter les fuites de mémoire.
 
-# Exemple de requête de surveillance
-alerts = [e for e in chain.entries if e.data.get("event") == "DoS_ALERT"]
-if len(alerts) > 10:
-    trigger_admin_alert("Potential coordinated attack detected in Merkle Chain")
+    Persistance : En cas de redémarrage, les compteurs sont remis à zéro (comportement standard pour protéger la disponibilité).
+
+Ce document fait partie de la documentation officielle du Teleological Bounding Protocol v4.2.1.
