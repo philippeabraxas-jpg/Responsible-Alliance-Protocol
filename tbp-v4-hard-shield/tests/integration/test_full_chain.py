@@ -9,6 +9,9 @@ def test_full_chain_validation():
     Test E2E : Action -> Signature HSM -> Validation OPA -> Ancrage Merkle
     """
     # 1. Setup des composants
+    import os
+    if os.path.exists("tests/temp_audit.json"):
+        os.remove("tests/temp_audit.json")
     signer = HSMSigner(hsm_type=HSMType.SOFTWARE)
     audit_chain = MerkleAuditChain(storage_path="tests/temp_audit.json")
     enforcer = TBPEnforcer()

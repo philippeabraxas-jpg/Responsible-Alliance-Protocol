@@ -89,12 +89,19 @@ class TBPLogSigner:
         """
         if self.mode == "v4.2-hsm":
             # 1. Préparation des données (on s'assure d'avoir un timestamp)
-            if "timestamp" not in log_data:
-                log_data["timestamp"] = datetime.now(timezone.utc).isoformat()
+            # Make a copy to avoid mutating the original
+            if isinstance(log_data, dict):
+                log_data_copy = log_data.copy()
+            else:
+                # If it's not a dict, wrap it
+                log_data_copy = {"data": log_data}
+            
+            if "timestamp" not in log_data_copy:
+                log_data_copy["timestamp"] = datetime.now(timezone.utc).isoformat()
             
             # 2. Ajout à la chaine de Merkle (génère le hash interne)
             # Note: chain.append gère la liaison avec le bloc précédent
-            entry_hash = self.chain.append(log_data)
+            entry_hash = self.chain.append(log_data_copy)
             
             # 3. Signature du hash de l'entrée via HSM
             # L'agent_id est fixé à "v4.1-migrated-agent" pour l'audit
@@ -103,7 +110,7 @@ class TBPLogSigner:
             # 4. Retour au format compatible v4.1 enrichi
             return {
                 "version": "4.2-compat",
-                "data": log_data,
+                "data": log_data_copy,
                 "signature": signing_result.signature.hex(),
                 "merkle_root": self.chain.get_root(),
                 "previous_hash": self.chain.entries[-1].previous_hash if len(self.chain) > 1 else None,
@@ -112,6 +119,7 @@ class TBPLogSigner:
         
         # Si on est en pur v4.1
         return self.signer.sign_log(log_data)
+
 
 # --- 3. L'ASSISTANT DE MIGRATION ---
 class MigrationHelper:

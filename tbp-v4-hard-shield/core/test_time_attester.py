@@ -284,7 +284,7 @@ class TestRealTSA:
     """
     
     @pytest.mark.skipif(
-        not pytest.config.getoption("--run-network-tests", default=False),
+        "not config.getoption('--run-network-tests', default=False)",
         reason="Network tests disabled (use --run-network-tests to enable)"
     )
     def test_freetsa_real(self):
@@ -328,7 +328,7 @@ class TestRealTSA:
             attester.close()
     
     @pytest.mark.skipif(
-        not pytest.config.getoption("--run-network-tests", default=False),
+        "not config.getoption('--run-network-tests', default=False)",
         reason="Network tests disabled"
     )
     def test_multiple_tsa_servers(self):

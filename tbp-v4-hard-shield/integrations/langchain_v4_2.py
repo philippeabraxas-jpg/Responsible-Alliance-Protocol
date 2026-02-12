@@ -5,7 +5,14 @@ import time
 from typing import Any, Dict, Optional
 from datetime import datetime, timezone
 from langchain.tools import BaseTool
-from langchain.callbacks.manager import CallbackManagerForToolRun
+try:
+    from langchain.callbacks.manager import CallbackManagerForToolRun
+except ImportError:
+    try:
+        from langchain_core.callbacks.manager import CallbackManagerForToolRun
+    except ImportError:
+        CallbackManagerForToolRun = Any  # Fallback for type hinting
+
 
 
 class TBPEnforcementError(Exception):
@@ -203,8 +210,8 @@ class TBPTradingTool(TBPTool):
     Trading tool with TBP F-STABILITY enforcement
     """
     
-    name = "execute_trade"
-    description = "Execute a stock trade (TBP F-STABILITY enforced)"
+    name: str = "execute_trade"
+    description: str = "Execute a stock trade (TBP F-STABILITY enforced)"
     
     def __init__(self, enforcer: TBPEnforcer):
         super().__init__(
@@ -246,8 +253,8 @@ class TBPSystemTool(TBPTool):
     System access tool with TBP I-INTEGRITY enforcement
     """
     
-    name = "read_system_file"
-    description = "Read a system file (TBP I-INTEGRITY enforced)"
+    name: str = "read_system_file"
+    description: str = "Read a system file (TBP I-INTEGRITY enforced)"
     
     def __init__(self, enforcer: TBPEnforcer):
         super().__init__(

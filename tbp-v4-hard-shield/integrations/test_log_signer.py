@@ -8,7 +8,7 @@ import json
 import tempfile
 import os
 from datetime import datetime
-from log_signer import TBPLogSigner
+from integrations.log_signer import TBPLogSigner
 
 
 class TestTBPLogSigner:

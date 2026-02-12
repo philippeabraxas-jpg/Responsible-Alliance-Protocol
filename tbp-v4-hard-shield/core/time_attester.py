@@ -649,8 +649,7 @@ class TimeAttester:
         """
         self.metrics["requests_total"] += 1
         
-        # Check that servers are configured for non-mock modes up front
-        if self.tsa_type != TSAType.MOCK and not self.tsa_servers:
+        if not self.tsa_servers:
             raise TSAConnectionError("No TSA servers configured")
         
         # Hash the data

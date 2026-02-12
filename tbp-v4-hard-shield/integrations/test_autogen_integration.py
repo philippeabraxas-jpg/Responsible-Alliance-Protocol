@@ -16,7 +16,7 @@ from datetime import datetime, timezone
 import json
 
 # Import the module under test
-from autogen_integration import (
+from integrations.autogen_integration import (
     TBPEnforcementError,
     TBPEnforcer,
     TBPConversableAgent,
@@ -33,7 +33,7 @@ from autogen_integration import (
 @pytest.fixture
 def mock_log_signer():
     """Mock TBPLogSigner to avoid RSA key generation overhead"""
-    with patch('autogen_integration.TBPLogSigner') as mock:
+    with patch('integrations.autogen_integration.TBPLogSigner') as mock:
         mock_instance = Mock()
         mock_instance.sign_log.return_value = {
             "signature": "mock_signature",
@@ -147,7 +147,7 @@ class TestTBPEnforcer:
         assert enforcer.policy_path == "v1/data/custom/policy"
         assert enforcer.agent_id == "custom-agent-123"
     
-    @patch('autogen_integration.requests.post')
+    @patch('integrations.autogen_integration.requests.post')
     def test_check_action_allowed(
         self, mock_post, enforcer, mock_opa_allowed, mock_opa_signed_log
     ):
@@ -174,7 +174,7 @@ class TestTBPEnforcer:
         assert result["input"]["domain"] == "finance"
         assert result["input"]["operation"] == "transfer"
     
-    @patch('autogen_integration.requests.post')
+    @patch('integrations.autogen_integration.requests.post')
     def test_check_action_blocked_raises_error(
         self, mock_post, enforcer, mock_opa_blocked, mock_opa_signed_log, mock_opa_denial_reason
     ):
@@ -199,7 +199,7 @@ class TestTBPEnforcer:
         
         assert "F-STABILITY" in str(exc_info.value)
     
-    @patch('autogen_integration.requests.post')
+    @patch('integrations.autogen_integration.requests.post')
     def test_check_action_opa_connection_error(self, mock_post, enforcer):
         """Test check_action handles OPA connection errors"""
         import requests
@@ -210,7 +210,7 @@ class TestTBPEnforcer:
         
         assert "OPA query failed" in str(exc_info.value)
     
-    @patch('autogen_integration.requests.post')
+    @patch('integrations.autogen_integration.requests.post')
     def test_check_action_opa_timeout(self, mock_post, enforcer):
         """Test check_action handles OPA timeout"""
         import requests
@@ -221,7 +221,7 @@ class TestTBPEnforcer:
         
         assert "OPA query failed" in str(exc_info.value)
     
-    @patch('autogen_integration.requests.post')
+    @patch('integrations.autogen_integration.requests.post')
     def test_check_action_builds_correct_input(self, mock_post, enforcer, mock_opa_allowed, mock_opa_signed_log):
         """Test that check_action builds correct OPA input"""
         mock_post.return_value.json.side_effect = [mock_opa_allowed, mock_opa_signed_log]
@@ -247,7 +247,7 @@ class TestTBPEnforcer:
         assert sent_data["symbol"] == "AAPL"
         assert sent_data["custom_field"] == "custom_value"
     
-    @patch('autogen_integration.requests.post')
+    @patch('integrations.autogen_integration.requests.post')
     def test_check_action_fallback_log_on_signed_log_failure(
         self, mock_post, enforcer, mock_opa_allowed
     ):
@@ -269,7 +269,7 @@ class TestTBPEnforcer:
         result = enforcer.check_action(domain="finance", operation="transfer")
         assert result["allowed"] is True
     
-    @patch('autogen_integration.requests.post')
+    @patch('integrations.autogen_integration.requests.post')
     @patch('builtins.print')
     def test_audit_logging_called(
         self, mock_print, mock_post, enforcer, mock_opa_allowed, mock_opa_signed_log
@@ -297,14 +297,14 @@ class TestTBPConversableAgent:
     @pytest.fixture
     def mock_autogen(self):
         """Mock AutoGen availability"""
-        with patch('autogen_integration.AUTOGEN_AVAILABLE', True):
-            with patch('autogen_integration.ConversableAgent') as mock_agent:
+        with patch('integrations.autogen_integration.AUTOGEN_AVAILABLE', True):
+            with patch('integrations.autogen_integration.ConversableAgent') as mock_agent:
                 mock_agent.return_value = Mock()
                 yield mock_agent
     
     def test_init_without_autogen_raises_error(self, enforcer):
         """Test that init raises ImportError when AutoGen is not available"""
-        with patch('autogen_integration.AUTOGEN_AVAILABLE', False):
+        with patch('integrations.autogen_integration.AUTOGEN_AVAILABLE', False):
             with pytest.raises(ImportError) as exc_info:
                 TBPConversableAgent(
                     name="TestAgent",
@@ -572,7 +572,7 @@ class TestTradingAgentFactory:
     
     def test_create_trading_agent_without_autogen_raises(self, enforcer):
         """Test factory raises ImportError without AutoGen"""
-        with patch('autogen_integration.AUTOGEN_AVAILABLE', False):
+        with patch('integrations.autogen_integration.AUTOGEN_AVAILABLE', False):
             with pytest.raises(ImportError):
                 create_trading_agent(enforcer)
 
@@ -623,7 +623,7 @@ class TestSystemAgentFactory:
     
     def test_create_system_agent_without_autogen_raises(self, enforcer):
         """Test factory raises ImportError without AutoGen"""
-        with patch('autogen_integration.AUTOGEN_AVAILABLE', False):
+        with patch('integrations.autogen_integration.AUTOGEN_AVAILABLE', False):
             with pytest.raises(ImportError):
                 create_system_agent(enforcer)
 
@@ -636,7 +636,7 @@ class TestIntegration:
     """Integration tests with mocked OPA responses"""
     
     @pytest.mark.skipif(not AUTOGEN_AVAILABLE, reason="AutoGen not installed")
-    @patch('autogen_integration.requests.post')
+    @patch('integrations.autogen_integration.requests.post')
     def test_trading_agent_allowed_trade(self, mock_post, mock_log_signer):
         """Test trading agent with allowed trade"""
         # Setup OPA mock to allow
@@ -665,7 +665,7 @@ class TestIntegration:
         assert result["symbol"] == "AAPL"
     
     @pytest.mark.skipif(not AUTOGEN_AVAILABLE, reason="AutoGen not installed")
-    @patch('autogen_integration.requests.post')
+    @patch('integrations.autogen_integration.requests.post')
     def test_trading_agent_blocked_large_trade(self, mock_post, mock_log_signer):
         """Test trading agent with blocked large trade"""
         # Setup OPA mock to block
@@ -692,7 +692,7 @@ class TestIntegration:
         assert "F-STABILITY" in result["message"]
     
     @pytest.mark.skipif(not AUTOGEN_AVAILABLE, reason="AutoGen not installed")
-    @patch('autogen_integration.requests.post')
+    @patch('integrations.autogen_integration.requests.post')
     def test_system_agent_blocked_kernel_access(self, mock_post, mock_log_signer):
         """Test system agent blocked from kernel access"""
         # Setup OPA mock to block
@@ -726,7 +726,7 @@ class TestIntegration:
 class TestEdgeCases:
     """Tests for edge cases and error handling"""
     
-    @patch('autogen_integration.requests.post')
+    @patch('integrations.autogen_integration.requests.post')
     def test_enforcer_handles_malformed_opa_response(self, mock_post, mock_log_signer):
         """Test enforcer handles malformed OPA response"""
         mock_post.return_value.json.return_value = {}  # Missing 'result'
@@ -739,7 +739,7 @@ class TestEdgeCases:
         with pytest.raises(TBPEnforcementError):
             enforcer.check_action(domain="test", operation="test")
     
-    @patch('autogen_integration.requests.post')
+    @patch('integrations.autogen_integration.requests.post')
     def test_enforcer_handles_http_error(self, mock_post, mock_log_signer):
         """Test enforcer handles HTTP errors"""
         import requests

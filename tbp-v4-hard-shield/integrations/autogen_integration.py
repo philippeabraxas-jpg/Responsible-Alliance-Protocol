@@ -20,7 +20,7 @@ except ImportError:
     class Agent:
         pass
 
-from log_signer import TBPLogSigner
+from .log_signer import TBPLogSigner
 
 
 class TBPEnforcementError(Exception):
