@@ -79,7 +79,6 @@ class RateLimiter:
         
         if self.audit_chain:
             try:
-                # Ancrage immuable de la tentative de sabotage
                 self.audit_chain.append(alert_data)
             except Exception as e:
                 logger.error(f"Failed to log DoS_ALERT to Merkle Chain: {e}")

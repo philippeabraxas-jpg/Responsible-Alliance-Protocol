@@ -35,8 +35,10 @@ TESTING:
     - Test mixed deployments (some v4.1, some v4.2)
 """
 
+import os
 import warnings
 import logging
+from datetime import datetime, timezone
 from typing import Dict, Any, Optional
 
 # --- 1. CONFIGURATION ---
@@ -44,7 +46,7 @@ logger = logging.getLogger(__name__)
 
 try:
     # On essaie de trouver l'ancien code v4.1 pour rester compatible
-    from tbp_v4_hard_shield.integrations.log_signer import TBPLogSigner as TBPLogSigner_v41
+    from integrations.log_signer import TBPLogSigner as TBPLogSigner_v41
 except ImportError:
     TBPLogSigner_v41 = None
 

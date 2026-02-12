@@ -389,11 +389,16 @@ class PatternAnalyzer:
         
         # Compare to recent actions
         recent = events[-10:]  # Last 10 actions
-        similar_count = sum(
-            1 for e in recent
-            if e.action_type == event.action_type
-            and abs(e.amount - event.amount) < (event.amount * 0.1)  # Within 10%
-        )
+        similar_count = 0
+        for e in recent:
+            amount_match = False
+            if event.amount == 0 and e.amount == 0:
+                amount_match = True
+            elif event.amount != 0:
+                amount_match = abs(e.amount - event.amount) < (event.amount * 0.1)
+                
+            if e.action_type == event.action_type and amount_match:
+                similar_count += 1
         
         return similar_count / len(recent)
     
@@ -460,8 +465,14 @@ class PatternAnalyzer:
         count = 1  # Current action
         for i in range(len(events) - 2, -1, -1):
             e = events[i]
-            if (e.action_type == event.action_type and
-                abs(e.amount - event.amount) < (event.amount * 0.1)):
+            # Handle zero amounts correctly
+            amount_match = False
+            if event.amount == 0 and e.amount == 0:
+                amount_match = True
+            elif event.amount != 0:
+                amount_match = abs(e.amount - event.amount) < (event.amount * 0.1)
+                
+            if e.action_type == event.action_type and amount_match:
                 count += 1
             else:
                 break

@@ -443,7 +443,6 @@ class MerkleAuditChain:
         
         # Add to chain
         self.entries.append(entry)
-        
         # Update Merkle tree
         self._update_merkle_tree()
         

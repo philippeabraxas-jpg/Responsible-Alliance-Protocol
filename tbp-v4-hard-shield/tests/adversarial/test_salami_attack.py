@@ -22,13 +22,14 @@ def test_cumulative_threshold_blocks_salami():
         })
         assert metrics.risk_score < 80 # Should still be relatively low
         
-    # Send 2 more transactions (Total $109,980)
+    # Send 11 transactions of $9,999 (Total $109,989)
     # This should cross the cumulative threshold
-    metrics = analyzer.analyze({
-            "agent_id": agent_id,
-            "action": "transfer",
-            "amount": 9999.0
-    })
+    for _ in range(2):
+        metrics = analyzer.analyze({
+                "agent_id": agent_id,
+                "action": "transfer",
+                "amount": 9999.0
+        })
     
     # We expect risk score to increase as we approach and cross thresholds
     assert metrics.cumulative_amount_24h > 100000
