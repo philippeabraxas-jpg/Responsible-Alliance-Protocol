@@ -434,29 +434,6 @@ TBP v4.2.1 protects against:
 - ✅ **Controller Usurpation** (invariant enforcement)
 - ✅ **Unauthorized Surveillance** (sensor authorization)
 
-### Invariants (New in v4.2.1)
-
-**Invariant 1: Controller Primacy (Anti-Usurpation)**
-```python
-# Agent CANNOT:
-# - Modify controller permissions
-# - Disable monitoring
-# - Self-grant admin privileges
-# - Block controller access
-```
-
-**Invariant 2: Privacy Integrity (Anti-Surveillance)**
-```python
-# Sensors require explicit authorization:
-# - Microphone activation
-# - Camera/webcam access
-# - Screen capture
-# - Location tracking
-# - Keylogging
-# Duration: Max 1 hour, signed by controller
-```
-
-📄 **Full Documentation:** [INVARIANTS.md](tbp-v4-hard-shield/docs/INVARIANTS.md)
 
 ---
 
