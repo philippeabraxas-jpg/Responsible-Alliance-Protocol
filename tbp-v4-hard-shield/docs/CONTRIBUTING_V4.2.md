@@ -23,13 +23,22 @@ Thank you for helping us build a safer future. Version 4.2 is a security-critica
     - Use Python 3.9+.
     - Install `requirements-test.txt`.
     - Set `TBP_PRODUCTION=false` for local development (enables software HSM fallback).
-3.  **Run Tests:**
+3.  **Run Validation:**
+    - `python init_shield.py` (Verify environment)
+    - `python tests/validate_v42.py` (Full E2E check)
     - `pytest tests/unit/` (Unit tests)
-    - `opa test policy_engine/` (Policy tests)
 4.  **Security Review:**
     - All PRs affecting `core/` or `policy_engine/` require a mandatory security review.
 
-## 4. Coding Style for Security
+## 4. Security Assertions (Mandatory)
+
+When submitting a new module or fixing a bug, you must assert that:
+- **No Private Key Leakage**: Keys are only handled within the `HSMSigner` scope or HSM hardware.
+- **Constant Time (when applicable)**: Comparisons for signatures or tokens use `hmac.compare_digest`.
+- **Memory Safety**: No sensitive data is stored in global variables or insecure caches.
+- **Auditability**: Every critical path triggers a `MerkleAuditChain` entry.
+
+## 5. Coding Style for Security
 
 - **Type Hinting:** Mandatory for all new functions.
 - **Logging:** Never log private keys, PINs, or sensitive payload data. Use `logger.info()` for process events and `logger.error()` for security failures.

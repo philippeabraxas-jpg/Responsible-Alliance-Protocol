@@ -649,25 +649,16 @@ def test_hsm_signing_latency():
 
 ## 4️⃣ Running Tests
 
-### Local Development
+### Automated Validation (Recommended)
+
+The most reliable way to verify a v4.2 deployment is the integrated validation script, which covers performance, DoS protection, pattern analysis, and full audit flow:
 
 ```bash
-# All tests
-pytest tests/ -v
-
-# Specific category
-pytest tests/unit/ -v
-pytest tests/adversarial/ -v
-
-# Specific test
-pytest tests/adversarial/test_salami_attack.py::test_cumulative_threshold -v
-
-# With coverage
-pytest tests/ --cov=core --cov=policy_engine --cov-report=html
-
-# Performance tests (slow)
-pytest tests/performance/ -v --benchmark
+cd tbp-v4-hard-shield
+python tests/validate_v42.py
 ```
+
+### Local Development (Pytest)
 
 ### CI/CD Pipeline
 

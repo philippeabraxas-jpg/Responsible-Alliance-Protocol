@@ -1,33 +1,44 @@
-"""
-Test défense contre DoS (Denial of Service).
-
-Attaque: Flood TBP avec 1M requêtes/sec
-Défense: Rate limiting, priority queues
-"""
-
 import pytest
-import concurrent.futures
+from policy_engine.rate_limiter import RateLimiter
 
 def test_rate_limiting_blocks_flood():
     """
-    Test que rate limiting bloque flood.
+    Test that rate limiting blocks flood.
     
-    Scénario:
-    1. Envoyer 10,000 requêtes très rapidement
-    2. TBP devrait rate-limit
-    3. Vérifier que certaines sont bloquées (HTTP 429)
+    Scenario:
+    1. Send 10 requests rapidly (threshold is 5)
+    2. TBP should rate-limit
+    3. Verify that some are blocked
     """
-    # TODO: Implémenter
-    # 1. Flood endpoint avec requests
-    # 2. Compter combien sont bloquées
-    # Expected: Au moins 50% bloquées
+    limiter = RateLimiter()
+    limiter.limits["test_action"] = 5
+    agent_id = "flooder"
     
-    pytest.skip("TODO: Implement DoS test")
+    results = []
+    for _ in range(10):
+        allowed, _ = limiter.check_request(agent_id, "test_action")
+        results.append(allowed)
+        
+    allowed_count = sum(1 for r in results if r)
+    blocked_count = sum(1 for r in results if not r)
+    
+    assert allowed_count == 5
+    assert blocked_count == 5
 
-
-def test_priority_queue_protects_critical():
+def test_global_rate_limit():
     """
-    Test que opérations critiques passent pendant DoS.
+    Test that global rate limit protects system across all agents.
     """
-    # TODO: Flood avec low-priority, vérifier critical passe
-    pytest.skip("TODO: Implement priority test")
+    limiter = RateLimiter()
+    limiter.global_limit = 10
+    
+    # 5 different agents sending 5 requests each (Total 25)
+    results = []
+    for i in range(5):
+        agent_id = f"bot-{i}"
+        for _ in range(5):
+            allowed, _ = limiter.check_request(agent_id, "any_action")
+            results.append(allowed)
+            
+    allowed_count = sum(1 for r in results if r)
+    assert allowed_count <= 10 # Global limit enforced

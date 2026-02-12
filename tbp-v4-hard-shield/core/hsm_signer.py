@@ -278,6 +278,15 @@ class HSMSigner:
             auto_generate_key: Generate key if not found
             key_size: RSA key size (2048 or 4096)
         """
+        # Convert string to Enum if necessary
+        if isinstance(hsm_type, str):
+            try:
+                hsm_type = HSMType(hsm_type.lower())
+            except ValueError:
+                # Fallback or error
+                logger.error(f"Invalid HSM type string: {hsm_type}")
+                raise HSMConnectionError(f"Unsupported HSM type: {hsm_type}")
+
         self.hsm_type = hsm_type
         self.slot = slot
         self.key_label = key_label
@@ -292,7 +301,8 @@ class HSMSigner:
         self._rate_limit_counter = 0
         self._rate_limit_reset = time.time()
         
-        logger.info(f"Initializing HSM signer (type={hsm_type.value}, slot={slot})")
+        display_type = self.hsm_type.value if hasattr(self.hsm_type, 'value') else str(self.hsm_type)
+        logger.info(f"Initializing HSM signer (type={display_type}, slot={slot})")
         
         if hsm_type == HSMType.SOFTWARE:
             if PRODUCTION_MODE:

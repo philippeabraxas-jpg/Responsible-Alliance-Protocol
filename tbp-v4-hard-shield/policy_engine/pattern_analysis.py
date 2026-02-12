@@ -260,7 +260,7 @@ class PatternAnalyzer:
         self.auto_save = auto_save
         
         # Thresholds (can be customized)
-        self.thresholds = thresholds or {
+        self.thresholds = {
             "cumulative_24h_amount": 100000,  # $100k per day
             "cumulative_7d_amount": 500000,   # $500k per week
             "frequency_burst_hz": 10,          # 10 actions/sec = burst
@@ -268,6 +268,8 @@ class PatternAnalyzer:
             "sequential_similar_max": 5,       # 5 consecutive = suspicious
             "time_anomaly_hours": (9, 17),    # Normal hours: 9am-5pm
         }
+        if thresholds:
+            self.thresholds.update(thresholds)
         
         # Load existing data
         if storage_path and Path(storage_path).exists():

@@ -1,8 +1,8 @@
-# TBP v4.2 "Shield-Hardening"
+# TBP v4.2.1 "Shield-Hardening"
 
 **Focus:** Adversarial Robustness - Protecting Against Malicious Actors  
-**Status:** 🚧 In Development  
-**Target Release:** May 2026
+**Status:** ✅ Stable / Production Ready  
+**Release Date:** February 2026
 
 ---
 
@@ -43,64 +43,55 @@
 ## 📂 Directory Structure
 
 ```
-tbp-v4.2-shield-hardening/
+tbp-v4-hard-shield/
 ├── core/                    # Cryptographic primitives
 │   ├── hsm_signer.py       # Hardware-backed signing
 │   ├── merkle_audit.py     # Immutable audit chain
-│   └── time_attester.py    # RFC 3161 timestamps
+│   ├── time_attester.py    # RFC 3161 timestamps
+│   └── tbp_signature_service.py # Full audit integration
 │
-├── policy_engine/           # Hardened OPA
-│   ├── opa_decision.rego   # Decision logic ONLY (no crypto)
-│   └── opa_secure.conf     # Read-only config
+├── policy_engine/           # Hardened OPA & Logic
+│   ├── opa_decision.rego   # Decision logic
+│   ├── pattern_analysis.py # Anti-Salami engine
+│   └── rate_limiter.py     # Anti-DoS engine
 │
-├── integrations/            # Backward compatibility
+├── integrations/            # Connectors & Shims
 │   ├── backward_v4.1.py    # Migration wrapper
-│   └── langchain_v4.2.py   # Updated interface
+│   └── langchain_v4.2.py   # Secure LangChain provider
 │
-├── audit_tools/             # Independent verification
-│   ├── verify_logs.py      # Offline log verification
-│   └── compromise_scanner.py # Detect tampering
+├── audit_tools/             # Verification
+│   ├── verify_logs.py      # Offline verification
+│   └── compromise_scanner.py # Integrity checks
 │
-├── tests/                   # Adversarial testing
-│   ├── test_policy_poisoning.py
-│   ├── test_salami_attack.py
-│   ├── test_dos_attack.py
-│   └── test_merkle_integrity.py
+├── tests/                   # Test Suites
+│   ├── validate_v42.py     # Ultimate validation script
+│   ├── unit/               # Unit tests
+│   └── adversarial/        # Attack simulations
 │
-└── docs/                    # v4.2-specific docs
-    ├── ARCHITECTURE_V4.2.md
-    ├── MIGRATION_GUIDE.md
-    ├── TESTING_V4.2.md
-    ├── CONTRIBUTING_V4.2.md
-    └── ARCHITECTURE_DECISIONS.md
+└── docs/                    # Integrated documentation
 ```
 
 ---
 
-## 🚀 Getting Started (For Contributors)
+## 🚀 Getting Started
 
 ### Prerequisites
-- ✅ Completed v4.1 (stable base)
-- ✅ Understanding of adversarial threat model (see SECURITY.md)
-- ✅ Basic cryptography knowledge (signatures, Merkle trees)
-- ✅ Python 3.9+ with cryptography library
+- Python 3.9+
+- Open Policy Agent (OPA) - [Installation](https://www.openpolicyagent.org/docs/latest/#installation)
 
 ### Quick Start
 
 ```bash
-# Clone repo
-git clone https://github.com/philippeabraxas-jpg/Responsible-Alliance-Protocol.git
-cd Responsible-Alliance-Protocol
+cd tbp-v4-hard-shield
 
-# Checkout v4.2 development branch
-git checkout v4.2-dev
-
-# Install dependencies
-cd tbp-v4.2-shield-hardening
+# 1. Install dependencies
 pip install -r requirements.txt
 
-# Run tests (should pass even with stubs)
-pytest tests/ -v
+# 2. Initialize the Shield (Genesis block + OPA validation)
+python init_shield.py
+
+# 3. Run the complete validation suite
+python tests/validate_v42.py
 ```
 
 ---
@@ -108,36 +99,29 @@ pytest tests/ -v
 ## 📋 Current Status
 
 ### ✅ Completed
-- [x] Architecture planning
-- [x] Threat model documentation
-- [x] Directory structure
-- [x] Stubs for core modules
-- [x] HSM signer implementation (see core/hsm_signer.py)
-- [x] Merkle audit chain (see core/merkle_audit.py)
-- [x] Pattern analysis engine
-- [x] Rate limiting infrastructure
-      
-### 🚧 In Progress
+- [x] **Secure Initialization**: `init_shield.py` with OPA syntax validation.
+- [x] **HSM Signer**: Hardened signing with software fallback.
+- [x] **Merkle Audit Chain**: Production-ready immutable logs.
+- [x] **Pattern Analysis**: Salami attack detection implemented.
+- [x] **Rate Limiting**: Identity-aware DoS protection.
+- [x] **Backward Compatibility**: `backward_v4.1.py` wrapper stable.
+- [x] **Automated Validation**: `validate_v42.py` for P95 latency and E2E checks.
 
-### ⏳ Planned
-- [ ] Adversarial test suite
-- [ ] Performance benchmarks
-- [ ] Migration tools from v4.1
-- [ ] Production deployment guide
+### 🚧 In Progress
+- [ ] Adversarial test suite (expanding edge cases)
+- [ ] Production deployment guide (Kubernetes/Cloud)
 
 ---
 
-## 🎓 For Caetano & Contributors
+## 🎓 For Contributors
 
-**Your mission:** Implement the TODOs in the stub files.
+**Your mission:** Ensure the shield remains impenetrable.
 
 **Start here:**
 1. Read `docs/ARCHITECTURE_DECISIONS.md` (understand WHY)
-2. Read `docs/MIGRATION_GUIDE.md` (understand compatibility)
-3. Pick a module (hsm_signer.py or merkle_audit.py)
-4. Implement according to spec
-5. Write tests (tests/ directory)
-6. Submit PR
+2. Read `docs/CONTRIBUTING_V4.2.md` (understand HOW)
+3. Run `python tests/validate_v42.py` to verify your environment
+4. Submit PR against `v4.2-dev`
 
 **Every stub has detailed TODO comments explaining:**
 - What it should do

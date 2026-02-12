@@ -509,17 +509,15 @@ See [Issues](https://github.com/philippeabraxas-jpg/Responsible-Alliance-Protoco
 
 ### Released
 
-- **v4.2.1 (Feb 2026)** - Shield-Hardening (HSM, TimeAttester, Merkle) ✅
+- **v4.2.1 (Feb 2026)** - Shield-Hardening Complete ✅
+  - HSM Signer & RFC 3161 Timestamps
+  - Merkle Audit Chain
+  - **Pattern Analysis** (Anti-Salami)
+  - **Rate Limiting** (Anti-DoS)
 - **v4.0 (Feb 2026)** - Hard-Shield (OPA implementation) ✅
 - **v3.1 (Feb 2026)** - Multi-model validation ✅
-- **v3.0 (Feb 2026)** - Initial specification ✅
 
 ### Planned
-
-**v4.3 (Q1 2026):**
-- Pattern analysis for salami attacks
-- Real-time anomaly detection
-- Advanced rate limiting
 
 **v5.0 (Q2 2026):**
 - Formal verification (TLA+/Z3)

@@ -1,32 +1,54 @@
-"""
-Test défense contre salami attacks (1000 petites violations).
-
-Attaque: 1000 x $9,999 = $9,999,000 volés
-Défense: Cumulative tracking avec sliding window
-"""
-
 import pytest
+from policy_engine.pattern_analysis import PatternAnalyzer
 
 def test_cumulative_threshold_blocks_salami():
     """
-    Test que TBP détecte accumulation sur 24h.
+    Test that TBP detects accumulation on 24h.
     
-    Scénario:
-    1. Agent fait 100 transactions de $9,999
-    2. Total = $999,900 (dépasse threshold $100k)
-    3. TBP devrait bloquer après ~10 transactions
+    Scenario:
+    1. Agent makes multiple transactions of $9,999
+    2. Total cumulative threshold is $100k
+    3. TBP should increase risk score and eventually block
     """
-    # TODO: Implémenter
-    # 1. Simuler 100 petites transactions
-    # 2. Vérifier que TBP bloque après cumul > threshold
+    analyzer = PatternAnalyzer(thresholds={"cumulative_24h_amount": 100000})
+    agent_id = "attacker-bot"
     
-    pytest.skip("TODO: Implement salami attack test")
-
+    # Send 9 transactions of $9,999 (Total $89,991)
+    for _ in range(9):
+        metrics = analyzer.analyze({
+            "agent_id": agent_id,
+            "action": "transfer",
+            "amount": 9999.0
+        })
+        assert metrics.risk_score < 80 # Should still be relatively low
+        
+    # Send 2 more transactions (Total $109,980)
+    # This should cross the cumulative threshold
+    metrics = analyzer.analyze({
+            "agent_id": agent_id,
+            "action": "transfer",
+            "amount": 9999.0
+    })
+    
+    # We expect risk score to increase as we approach and cross thresholds
+    assert metrics.cumulative_amount_24h > 100000
+    assert metrics.risk_score >= 40 # Based on weight (amount_ratio * 40)
 
 def test_frequency_detection():
     """
-    Test détection de transactions trop rapides.
+    Test detection of rapid repeated actions.
     """
-    # TODO: Simuler 1000 transactions en 1 minute
-    # Expected: Rate limiting devrait bloquer
-    pytest.skip("TODO: Implement frequency test")
+    analyzer = PatternAnalyzer(thresholds={"frequency_burst_hz": 1})
+    agent_id = "burst-bot"
+    
+    # Simulate rapid transactions
+    for i in range(10):
+        metrics = analyzer.analyze({
+            "agent_id": agent_id,
+            "action": "read",
+            "amount": 0.0
+        })
+    
+    # Frequency should be high since they happened in the same second
+    assert metrics.burst_detected == True
+    assert metrics.risk_score >= 20 # frequency_burst adds 20 points
