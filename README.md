@@ -635,7 +635,7 @@ python validate_v42.py
 ---
 
 <div align="center">
-<img width="512" height="512" alt="TBP Logo" src="https://github.com/user-attachments/assets/f87975c8-98aa-4a7e-b75d-97ae54f7fba0" />
+<img width="312" height="312" alt="TBP Logo" src="https://github.com/user-attachments/assets/f87975c8-98aa-4a7e-b75d-97ae54f7fba0" />
 
 **Built with ❤️ for safer AI agents**
 
