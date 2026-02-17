@@ -1,0 +1,51 @@
+# TBP v4.2 Hardened Dockerfile
+# Multi-stage build for security and size optimization
+
+# --- Stage 1: Build & Dependencies ---
+FROM python:3.9-slim as builder
+
+WORKDIR /build
+
+# Install build dependencies (for crypto libraries)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    libssl-dev \
+    libffi-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install requirements
+COPY requirements-test.txt .
+RUN pip install --no-cache-dir --prefix=/install -r requirements-test.txt
+
+# --- Stage 2: Final Secure Image ---
+FROM python:3.9-slim
+
+WORKDIR /app
+
+# Copy installed dependencies
+COPY --from=builder /install /usr/local
+
+# Copy application code
+COPY core/ /app/core/
+COPY policy_engine/ /app/policy_engine/
+COPY integrations/ /app/integrations/
+COPY audit_tools/ /app/audit_tools/
+
+# Create non-root user
+RUN groupadd -r tbp && useradd -r -g tbp tbp \
+    && mkdir -p /app/data /app/logs \
+    && chown -R tbp:tbp /app
+
+# Security: Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    TBP_PRODUCTION=true
+
+# Switch to non-root user
+USER tbp
+
+# Volumes for audit logs
+VOLUME ["/app/data"]
+
+# Default command (overridden in compose)
+CMD ["python", "-m", "core.tbp_signature_service"]

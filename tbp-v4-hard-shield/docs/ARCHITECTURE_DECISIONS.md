@@ -648,6 +648,41 @@ Quality > speed. Security cannot be compromised.
 
 ---
 
+## ADR-009: Production Merkle Tree Implementation
+
+### Context
+
+**Problem:** Standard Merkle Tree implementations often have edge cases with odd-numbered leaves or timezone inconsistencies that lead to non-deterministic roots across different environments.
+
+**Security Risk:** If two auditors compute different roots for the same data due to implementation details (system timezone, leaf balancing logic), the audit trail's trust is compromised.
+
+### Decision
+
+**Implement a strictly deterministic Merkle Tree with the following properties:**
+
+1.  **Strict UTC Enforcement**: All timestamps are converted to ISO 8601 UTC using `datetime.now(timezone.utc)`.
+2.  **Deterministic Balancing**: For odd-numbered leaf nodes, the last node is duplicated to maintain a balanced binary tree (following best practices for Merkle Trees).
+3.  **Hashed Signatures**: Signatures are hashed as part of the leaf data to ensure the signature itself is protected by the tree.
+4.  **RFC 3161 Integration**: External TSA tokens are stored as part of the leaf metadata to provide non-repudiation of time.
+
+### Alternatives Considered
+
+- **Dynamic Balancing (No duplication)**: More complex to implement verifiably and less standard.
+- **System Timezone**: Rejected due to non-determinism across global deployments.
+
+### Consequences
+
+**✅ Benefits:**
+- Absolute determinism: identical logs always produce identical roots.
+- Verifiable by third-party auditors without custom logic.
+- External time certification (TSA) integrated.
+
+**❌ Costs:**
+- Small overhead for node duplication in odd trees.
+- Slightly larger audit file due to TSA tokens.
+
+---
+
 ## Decision Summary Table
 
 | ADR | Decision | Primary Benefit | Primary Cost |
@@ -660,6 +695,7 @@ Quality > speed. Security cannot be compromised.
 | 006 | Rate limiting | DoS protection | Configuration complexity |
 | 007 | Read-only policies | Policy integrity | No hot-reload |
 | 008 | Test-driven security | Early bug detection | Development time |
+| 009 | Production Merkle | Deterministic roots | Storage overhead |
 
 ---
 

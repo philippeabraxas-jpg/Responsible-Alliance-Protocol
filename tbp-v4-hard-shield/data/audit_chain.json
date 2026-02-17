@@ -1,0 +1,22 @@
+{
+  "version": "1.0",
+  "timestamp": "2026-02-12T20:07:19.666158+00:00",
+  "root_hash": "1284cb2a7537117199f8f527e231786f1daa11ed95495c99ae767ba635824b6f",
+  "entry_count": 1,
+  "published_roots": [],
+  "entries": [
+    {
+      "data": {
+        "event": "GENESIS",
+        "message": "Responsible Alliance Protocol - Shield Hardening Activated",
+        "timestamp": "2026-02-12T20:07:19.658569+00:00",
+        "version": "4.2.1"
+      },
+      "previous_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "timestamp": "2026-02-12T20:07:19.663013+00:00",
+      "hash": "1284cb2a7537117199f8f527e231786f1daa11ed95495c99ae767ba635824b6f",
+      "signature": "04ed0fb868547219eeaf68e5caaa9a79c6248f25bf67949a921883336ea9bff2bdcc3ddfa86b497586b75ce4f957b0d3303e53b7fcc0846fc822ad05c36548674510e3ef0a8c8dc5a541910ced30ac5130d654ff4bf618d468fce51b33160d6edfe9f401e2186a0e6457cb9cbc01dc309294e49df0a201914a097e6ddf3cecb6bcc4eb2401275cb4dac95de756832637579b301b64ba5d4a50babc5e69bdf944b25be2ad091665096e8de8df6bda0d3d633122cb87ec54f9df124e3fec51aeb063d4ae21c112bb42ca842a30978f9ca7184ae7e9b686943bea82017c0b1d91512646476a0e4b938e8664f77530efd1f2c290b2f1625e1be4a76c73e316c641bf",
+      "tsa_token": null
+    }
+  ]
+}

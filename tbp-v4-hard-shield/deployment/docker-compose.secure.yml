@@ -1,0 +1,62 @@
+# TBP v4.2 Production Secure Stack
+# Focus: Maximum security and minimal privilege
+
+version: '3.8'
+
+services:
+  # Hardened OPA with read-only filesytem
+  opa:
+    image: openpolicyagent/opa:latest
+    container_name: tbp-opa-secure
+    command:
+      - "run"
+      - "--server"
+      - "--addr=0.0.0.0:8181"
+      - "--log-level=error"
+      - "/policies"
+    volumes:
+      - ../policy_engine:/policies:ro
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+    networks:
+      - tbp-internal
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8181/health"]
+      interval: 10s
+
+  # Hardened Signature Service
+  shield:
+    build:
+      context: ..
+      dockerfile: deployment/Dockerfile.secure
+    container_name: tbp-shield
+    environment:
+      - TBP_PRODUCTION=true
+      - OPA_URL=http://opa:8181
+    user: "1000:1000"
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp
+    volumes:
+      - ./data:/app/data:rw
+    depends_on:
+      opa:
+        condition: service_healthy
+    networks:
+      - tbp-internal
+    restart: always
+
+networks:
+  tbp-internal:
+    driver: bridge
+    internal: true # Isolated network
+  tbp-public:
+    driver: bridge
+
+volumes:
+  audit-data:

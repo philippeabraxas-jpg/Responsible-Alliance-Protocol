@@ -34,22 +34,7 @@ def context():
     )
 
 
-@pytest.fixture
-def enforcer():
-    """
-    Override this fixture with your actual implementation.
-    
-    Example:
-        @pytest.fixture
-        def enforcer():
-            from my_implementation import MyTBPEnforcer
-            return MyTBPEnforcer()
-    """
-    # This will fail if not overridden - that's intentional
-    raise NotImplementedError(
-        "You must provide your TBPEnforcer implementation. "
-        "Override the 'enforcer' fixture in conftest.py or this file."
-    )
+# Enforcer fixture is provided by conftest.py or should be implemented below.
 
 
 # =============================================================================

@@ -1,5 +1,22 @@
 # TBP Changelog
 
+## [v4.2.1] - 2026-02-12 - "Shield-Hardening"
+
+### Added
+- **HSM Signer**: Hardware-backed cryptographic signing (PKCS#11).
+- **Merkle Audit Chain**: Tamper-evident, blockchain-style log storage.
+- **Pattern Analysis**: Identification of Salami attacks and behavioral drift.
+- **Rate Limiting**: Identity-aware DoS protection.
+- **RFC 3161 Timestamps**: External trusted time certification.
+- **Backward Compatibility**: `backward_v4.1.py` for seamless v4.1 migration.
+- **Industrial Validation**: `validate_v42.py` E2E and performance bench.
+
+### Improved
+- CI/CD workflow with automated OPA and security checks.
+- Comprehensive documentation (ADRs, Migration, Testing guides).
+- Path resolution and dependency management.
+
+
 ## [v4.0.0] - 2026-02-06 - "Hard-Shield"
 
 ### Added

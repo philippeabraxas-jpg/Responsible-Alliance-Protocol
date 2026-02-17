@@ -38,7 +38,7 @@ As governance matures, rules will be refined through Alliance Consensus, ensurin
 
 To test or adjust thresholds for your specific use case:
 
-    Modify the variables in tbp_core.rego.
+    Modify the variables in opa_decision.rego.
 
     Run the unit test suite: opa test . -v.
 

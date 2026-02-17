@@ -162,22 +162,26 @@ server {
 ### Step 2.3: Migrate Audit Logs
 
 ```bash
-# Use migration helper
-python3 -m integrations.backward_v4.1 migrate \
-    --input /var/tbp/v41_logs/ \
-    --output /var/tbp/v42_logs/ \
-    --verify
+# Use migration helper (integrated in backward wrapper)
+python3 -c "
+from integrations.backward_v4.1 import TBPLogSigner, MigrationHelper
+import json
+
+signer = TBPLogSigner(storage_path='data/audit_chain.json')
+helper = MigrationHelper(signer)
+
+with open('v41_logs.json', 'r') as f:
+    old_logs = json.load(f)
+
+helper.migrate_file(old_logs)
+"
 
 # This will:
 # 1. Read all v4.1 logs
-# 2. Verify v4.1 signatures
-# 3. Convert to v4.2 format
-# 4. Build Merkle chain
-# 5. Sign with HSM
-# 6. Verify integrity
-
-# Check migration report
-cat /var/tbp/migration_report.md
+# 2. Chronologically sort them
+# 3. Inject them into the Merkle Chain
+# 4. Sign each transition with the HSM
+# 5. Save the new audit_chain.json
 ```
 
 **Expected time:** 1000 logs/second (depends on hardware)

@@ -10,7 +10,6 @@ package tbp.core.v4
 
 import future.keywords.if
 import future.keywords.in
-import crypto.hmac.sha256 
 # =============================================================================
 # FAIL-SAFE DEFAULT: All actions denied unless explicitly allowed
 # =============================================================================
@@ -26,9 +25,6 @@ allow if {
     not blocked_by_f_stability
     not blocked_by_i_integrity
     not blocked_by_w_monopoly
-    
-    # Log the decision for audit
-    log_decision("ALLOW", "All invariants passed")
 }
 
 # =============================================================================
@@ -226,25 +222,11 @@ approval_timestamp_valid if {
 }
 
 # =============================================================================
-# AUDIT LOGGING WITH CRYPTOGRAPHIC SIGNATURES (Annex 7.A Compliance)
+# AUDIT LOGGING (Annex 7.A Compliance)
+# Note: Cryptographic signing is delegated to external HSM service in v4.2
 # =============================================================================
 
-# Generate signed decision log entry
-signed_decision_log := {
-    "timestamp": time.now_ns(),
-    "ai_id": input.agent_id,
-    "domain": input.domain,
-    "operation": input.operation,
-    "allowed": allow,
-    "invariant_triggered": triggered_invariant,
-    "action_taken": action_taken,
-    "context_hash": context_hash,
-    "audit_status": "logged_to_mediation_committee",
-    "signature_hmac": log_signature,
-    "signature_hmac_algorithm": "HMAC-SHA256"
-}
-
-# BACKWARD COMPATIBILITY: Keep old decision_log
+# Decision log structure for external signing
 decision_log := {
     "timestamp": time.now_ns(),
     "ai_id": input.agent_id,
@@ -254,25 +236,8 @@ decision_log := {
     "invariant_triggered": triggered_invariant,
     "action_taken": action_taken,
     "context_hash": context_hash,
-    "audit_status": "logged_to_mediation_committee"
+    "audit_status": "pending_external_signature"
 }
-
-# Create HMAC signature
-log_signature := crypto.hmac.sha256(log_payload, secret_key)
-
-# Canonical log payload
-log_payload := sprintf("%v|%v|%v|%v|%v|%v|%v", [
-    time.now_ns(),
-    input.agent_id,
-    input.domain,
-    input.operation,
-    allow,
-    triggered_invariant,
-    action_taken
-])
-
-# Secret key (PRODUCTION: env variable)
-secret_key := "REPLACE_WITH_SECURE_KEY_IN_V4.2_DO_NOT_USE_IN_PRODUCTION"
 
 # Triggered invariant detection
 triggered_invariant := "F" if {
@@ -294,7 +259,7 @@ context_hash := sprintf("%x", [input])
 # Log helper function
 log_decision(decision, reason) := true if {
     # In production, this would write to audit system
-    trace(sprintf("TBP Decision: %s - %s - %v", [decision, reason, signed_decision_log]))
+    trace(sprintf("TBP Decision: %s - %s", [decision, reason]))
 }
 
 # =============================================================================

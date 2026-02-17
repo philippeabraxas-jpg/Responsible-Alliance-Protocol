@@ -1,0 +1,21 @@
+{
+  "version": "1.0",
+  "timestamp": "2026-02-12T22:23:38.805132+00:00",
+  "root_hash": "1c2857bfd63395c0fb42a06d1cce340ccba6e72ebcb9702ebae43b2b6f9e676f",
+  "entry_count": 1,
+  "published_roots": [],
+  "entries": [
+    {
+      "data": {
+        "action_type": "access_database",
+        "agent_id": "trusted-bot-01",
+        "resource": "hr_records"
+      },
+      "previous_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "timestamp": "2026-02-12T22:23:38.804201+00:00",
+      "hash": "1c2857bfd63395c0fb42a06d1cce340ccba6e72ebcb9702ebae43b2b6f9e676f",
+      "signature": "68942740ca25bfc91e307f00a87355eb6002d99fb1c535700a71ed057214faf6dbb8e8e93a36e45762451d6cdc86f445998fab9d15ce59fc59603483d24ad1c61fa16887a0cf0713ecf00e7ae6ea93292479f64793667188c9c4ab2e4f33dfc0ef5c148a8fad9a29a4d4db45c1a588aacd9d868cc8163878f4466df9c87e7c494838c7f9a6552848c92ee4a28ccc30411c5d5f9d84d68d0f718cb5e2245edd906e1b5b700062fe900d0dcb183a86b1c0a8671e63e05df21c54e1e224a8b7c00bea19ffe7a0e549962ab5ae940f2df2ccb63059ddd4bdb3e0ed85326f52e52d98741cb2c9c028de2666d05cea63856ca4a7b9f5f718bb8f3aa9244e0aeb78d4f5",
+      "tsa_token": null
+    }
+  ]
+}

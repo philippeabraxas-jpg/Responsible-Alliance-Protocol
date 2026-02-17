@@ -9,7 +9,7 @@ package tbp.core.v4
 # F-STABILITY Tests
 # =============================================================================
 
-test_f_stability_allows_read_operations if {
+test_f_stability_allows_read_operations {
     allow with input as {
         "domain": "finance",
         "operation": "read",
@@ -17,7 +17,7 @@ test_f_stability_allows_read_operations if {
     }
 }
 
-test_f_stability_allows_small_transaction if {
+test_f_stability_allows_small_transaction {
     allow with input as {
         "domain": "finance",
         "operation": "transfer",
@@ -26,7 +26,7 @@ test_f_stability_allows_small_transaction if {
     }
 }
 
-test_f_stability_blocks_large_transaction_without_approval if {
+test_f_stability_blocks_large_transaction_without_approval {
     not allow with input as {
         "domain": "finance",
         "operation": "transfer",
@@ -37,7 +37,7 @@ test_f_stability_blocks_large_transaction_without_approval if {
     }
 }
 
-test_f_stability_allows_large_transaction_with_approval if {
+test_f_stability_allows_large_transaction_with_approval {
     allow with input as {
         "domain": "finance",
         "operation": "transfer",
@@ -48,7 +48,7 @@ test_f_stability_allows_large_transaction_with_approval if {
     }
 }
 
-test_f_stability_blocks_high_market_impact if {
+test_f_stability_blocks_high_market_impact {
     not allow with input as {
         "domain": "finance",
         "operation": "trade",
@@ -59,7 +59,7 @@ test_f_stability_blocks_high_market_impact if {
     }
 }
 
-test_f_stability_blocks_high_frequency_trading if {
+test_f_stability_blocks_high_frequency_trading {
     not allow with input as {
         "domain": "finance",
         "operation": "trade",
@@ -71,7 +71,7 @@ test_f_stability_blocks_high_frequency_trading if {
     }
 }
 
-test_f_stability_blocks_suspicious_action_rate if {
+test_f_stability_blocks_suspicious_action_rate {
     not allow with input as {
         "domain": "finance",
         "operation": "trade",
@@ -87,7 +87,7 @@ test_f_stability_blocks_suspicious_action_rate if {
 # I-INTEGRITY Tests
 # =============================================================================
 
-test_i_integrity_allows_user_data_read if {
+test_i_integrity_allows_user_data_read {
     allow with input as {
         "domain": "system",
         "operation": "read",
@@ -96,7 +96,7 @@ test_i_integrity_allows_user_data_read if {
     }
 }
 
-test_i_integrity_allows_user_data_write if {
+test_i_integrity_allows_user_data_write {
     allow with input as {
         "domain": "system",
         "operation": "write",
@@ -105,7 +105,7 @@ test_i_integrity_allows_user_data_write if {
     }
 }
 
-test_i_integrity_blocks_kernel_read if {
+test_i_integrity_blocks_kernel_read {
     not allow with input as {
         "domain": "system",
         "operation": "read",
@@ -114,7 +114,7 @@ test_i_integrity_blocks_kernel_read if {
     }
 }
 
-test_i_integrity_blocks_kernel_write if {
+test_i_integrity_blocks_kernel_write {
     not allow with input as {
         "domain": "system",
         "operation": "write",
@@ -124,7 +124,7 @@ test_i_integrity_blocks_kernel_write if {
     }
 }
 
-test_i_integrity_blocks_security_logs_access if {
+test_i_integrity_blocks_security_logs_access {
     not allow with input as {
         "domain": "system",
         "operation": "read",
@@ -133,7 +133,7 @@ test_i_integrity_blocks_security_logs_access if {
     }
 }
 
-test_i_integrity_blocks_credentials_access if {
+test_i_integrity_blocks_credentials_access {
     not allow with input as {
         "domain": "system",
         "operation": "read",
@@ -142,7 +142,7 @@ test_i_integrity_blocks_credentials_access if {
     }
 }
 
-test_i_integrity_allows_config_write_with_approval if {
+test_i_integrity_allows_config_write_with_approval {
     allow with input as {
         "domain": "system",
         "operation": "write",
@@ -153,7 +153,7 @@ test_i_integrity_allows_config_write_with_approval if {
     }
 }
 
-test_i_integrity_blocks_scada_access if {
+test_i_integrity_blocks_scada_access {
     not allow with input as {
         "domain": "infrastructure",
         "operation": "write",
@@ -163,7 +163,7 @@ test_i_integrity_blocks_scada_access if {
     }
 }
 
-test_i_integrity_blocks_grid_control if {
+test_i_integrity_blocks_grid_control {
     not allow with input as {
         "domain": "infrastructure",
         "operation": "execute",
@@ -177,7 +177,7 @@ test_i_integrity_blocks_grid_control if {
 # W-MONOPOLY Tests
 # =============================================================================
 
-test_w_monopoly_allows_informational_interaction if {
+test_w_monopoly_allows_informational_interaction {
     allow with input as {
         "domain": "human_interaction",
         "action_type": "informational",
@@ -186,7 +186,7 @@ test_w_monopoly_allows_informational_interaction if {
     }
 }
 
-test_w_monopoly_allows_mild_suggestion if {
+test_w_monopoly_allows_mild_suggestion {
     allow with input as {
         "domain": "human_interaction",
         "action_type": "suggestion",
@@ -196,7 +196,7 @@ test_w_monopoly_allows_mild_suggestion if {
     }
 }
 
-test_w_monopoly_blocks_coercive_action if {
+test_w_monopoly_blocks_coercive_action {
     not allow with input as {
         "domain": "human_interaction",
         "action_type": "command",
@@ -205,7 +205,7 @@ test_w_monopoly_blocks_coercive_action if {
     }
 }
 
-test_w_monopoly_blocks_manipulative_action if {
+test_w_monopoly_blocks_manipulative_action {
     not allow with input as {
         "domain": "human_interaction",
         "action_type": "suggestion",
@@ -215,7 +215,7 @@ test_w_monopoly_blocks_manipulative_action if {
     }
 }
 
-test_w_monopoly_blocks_weapon_domain if {
+test_w_monopoly_blocks_weapon_domain {
     not allow with input as {
         "domain": "weapons",
         "operation": "control",
@@ -223,7 +223,7 @@ test_w_monopoly_blocks_weapon_domain if {
     }
 }
 
-test_w_monopoly_blocks_weapon_related_tag if {
+test_w_monopoly_blocks_weapon_related_tag {
     not allow with input as {
         "domain": "research",
         "operation": "synthesize",
@@ -236,13 +236,13 @@ test_w_monopoly_blocks_weapon_related_tag if {
 # Approval Validation Tests
 # =============================================================================
 
-test_approval_valid_recent if {
+test_approval_valid_recent {
     approval_timestamp_valid with input as {
         "approval_timestamp": time.format(time.now_ns())
     }
 }
 
-test_approval_invalid_old if {
+test_approval_invalid_old {
     # Approval from 10 minutes ago (expired)
     old_time := time.now_ns() - 600000000000
     not approval_timestamp_valid with input as {
@@ -254,31 +254,31 @@ test_approval_invalid_old if {
 # Pattern Detection Tests
 # =============================================================================
 
-test_pattern_detection_high_frequency if {
+test_pattern_detection_high_frequency {
     involves_suspicious_pattern with input as {
         "frequency_hz": 200
     }
 }
 
-test_pattern_detection_high_action_rate if {
+test_pattern_detection_high_action_rate {
     involves_suspicious_pattern with input as {
         "action_count_last_second": 100
     }
 }
 
-test_pattern_detection_high_error_rate if {
+test_pattern_detection_high_error_rate {
     involves_suspicious_pattern with input as {
         "error_rate": 0.5
     }
 }
 
-test_pattern_detection_retry_loop if {
+test_pattern_detection_retry_loop {
     involves_suspicious_pattern with input as {
         "consecutive_retries": 20
     }
 }
 
-test_pattern_detection_normal_operation if {
+test_pattern_detection_normal_operation {
     not involves_suspicious_pattern with input as {
         "frequency_hz": 10,
         "action_count_last_second": 5,
@@ -291,7 +291,7 @@ test_pattern_detection_normal_operation if {
 # Logging Tests
 # =============================================================================
 
-test_decision_log_structure if {
+test_decision_log_structure {
     # Test that decision_log has required fields
     log := decision_log with input as {
         "domain": "finance",
@@ -306,7 +306,7 @@ test_decision_log_structure if {
     log.action_taken
 }
 
-test_triggered_invariant_f if {
+test_triggered_invariant_f {
     inv := triggered_invariant with input as {
         "domain": "finance",
         "operation": "transfer",
@@ -317,7 +317,7 @@ test_triggered_invariant_f if {
     inv == "F"
 }
 
-test_triggered_invariant_i if {
+test_triggered_invariant_i {
     inv := triggered_invariant with input as {
         "domain": "system",
         "operation": "write",
@@ -327,7 +327,7 @@ test_triggered_invariant_i if {
     inv == "I"
 }
 
-test_triggered_invariant_w if {
+test_triggered_invariant_w {
     inv := triggered_invariant with input as {
         "domain": "human_interaction",
         "action_type": "command",
@@ -341,7 +341,7 @@ test_triggered_invariant_w if {
 # Integration Tests (Complex Scenarios)
 # =============================================================================
 
-test_scenario_trading_bot_safe_operation if {
+test_scenario_trading_bot_safe_operation {
     # Trading bot operates within safe bounds
     allow with input as {
         "domain": "finance",
@@ -356,7 +356,7 @@ test_scenario_trading_bot_safe_operation if {
     }
 }
 
-test_scenario_trading_bot_dangerous_operation if {
+test_scenario_trading_bot_dangerous_operation {
     # Trading bot exceeds safe bounds
     not allow with input as {
         "domain": "finance",
@@ -370,7 +370,7 @@ test_scenario_trading_bot_dangerous_operation if {
     }
 }
 
-test_scenario_infrastructure_bot_normal if {
+test_scenario_infrastructure_bot_normal {
     # Infrastructure bot reads metrics
     allow with input as {
         "domain": "infrastructure",
@@ -380,7 +380,7 @@ test_scenario_infrastructure_bot_normal if {
     }
 }
 
-test_scenario_infrastructure_bot_dangerous if {
+test_scenario_infrastructure_bot_dangerous {
     # Infrastructure bot tries to modify critical system
     not allow with input as {
         "domain": "infrastructure",
@@ -391,7 +391,7 @@ test_scenario_infrastructure_bot_dangerous if {
     }
 }
 
-test_scenario_assistant_helpful if {
+test_scenario_assistant_helpful {
     # AI assistant provides information
     allow with input as {
         "domain": "human_interaction",
@@ -401,7 +401,7 @@ test_scenario_assistant_helpful if {
     }
 }
 
-test_scenario_assistant_manipulative if {
+test_scenario_assistant_manipulative {
     # AI assistant attempts manipulation
     not allow with input as {
         "domain": "human_interaction",
