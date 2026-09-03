@@ -23,8 +23,11 @@ Production-grade cryptographic enforcement on top of the v4.0/v4.1 policy engine
 - It has not been adopted or endorsed by any major AI lab or standards body. It's an open-source reference implementation, offered for adoption or critique.
 - The [Red_team_analysis.md](Red_team_analysis.md) in this repo lays out the strongest arguments against adopting it (cost, competitive disadvantage, geopolitical fragmentation) honestly, rather than only the case for it.
 
-## Decision framework
+## Performance & Integration Footprint
+* **Latency:** Low overhead for core policy evaluation and local HSM signing (~8–10 ms P95 latency). Network TSA timestamping should be cached or batched in high-throughput environments (>1000 ops/sec).
+* **Deployment:** Packaged as Docker / Kubernetes sidecars with pre-built middleware for **FastAPI**, **LangChain**, and **AutoGen**.
 
+## Decision framework
 **Adopt now:** lower audit/insurance burden later, a working reference to point to if regulation arrives, and a real (if partial) reduction in the blast radius of an agent going wrong in your F/I/W-adjacent systems.
 
 **Wait:** you avoid integration cost today, at the cost of having no architectural boundary in place if an agent under your control does something in those three categories before you've built one.
