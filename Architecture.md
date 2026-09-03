@@ -410,8 +410,8 @@ Only add GOVERNANCE when:
 - [Security Model Comparison](SECURITY.md)
 
 **Philosophical Background:**
-- [Charter V3: Foundational Principles](CHARTER_V3.md)
-- [Multi-Model Validation](Multi_model_convergence_analysis.md)
+- [Charter V3: Foundational Principles](philosophy/CHARTER_V3.md)
+- [Multi-Model Design Notes](philosophy/Multi_model_convergence_analysis.md)
 - [Red Team Analysis](Red_team_analysis.md)
 
 **Governance Details:**

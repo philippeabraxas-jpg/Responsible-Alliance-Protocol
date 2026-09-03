@@ -29,8 +29,8 @@
 
 ## I-INTEGRITY Critical Paths
 
-[Documenter pourquoi kernel_config, security_logs, etc. sont critiques]
+**Status: draft.** Rationale for treating paths like `kernel_config` and `security_logs` as critical (why write access to them is blocked outright rather than rate-limited or reviewed) still needs to be written up. Tracked as an open contribution — see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## W-MONOPOLY Detection
 
-[Documenter comment détecter coercion/manipulation]
+**Status: draft.** Detection heuristics for coercion/manipulation attempts are not yet documented here. Tracked as an open contribution — see [CONTRIBUTING.md](CONTRIBUTING.md).
