@@ -1,93 +1,42 @@
-# TBP-V3.1 Executive Summary
+# TBP Executive Summary
 
-**For:** Decision-makers, executives, policymakers
-**Reading time:** 10 minutes
-**Full documentation:** See repository
-
----
-
-## What is TBP?
-
-Teleological Bounding Protocol - architectural constraints 
-for autonomous AI systems to prevent systemic instability.
-
-## Why it matters
-
-5 major AI models independently converge on 60-80% probability 
-of critical incident within 24 months without these constraints.
-
-## Arguments Against (Devil's Advocate)
-
-1. Market self-regulation suffices
-2. Geopolitical race makes adoption suicidal
-3. Risks are overstated
-4. Complex solution to non-problem
-
-## Why These Arguments Fail
-
-1. Temporal asymmetry (humans too slow)
-2. Externality asymmetry (private profits, socialized risks)
-3. Infrastructure modernization (air-gaps disappearing)
-4. Tail risk insurance (one incident = regulatory chaos)
-
-## Irrefutable Points
-
-1. Machine-speed systems require architectural prevention
-2. Market cannot internalize externalized systemic risks
-
-## Your Decision
-
-**Option A:** Adopt TBP voluntarily now
-- Lower insurance premiums
-- Reputational advantage
-- Avoid post-incident chaos
-
-**Option B:** Wait for regulatory mandate post-incident
-- Higher compliance costs (10x)
-- Reputational damage
-- Rushed, poorly-designed regulations
-
-**Which do you choose?**
+**For:** Engineering leadership, security teams, deployment decision-makers
+**Reading time:** 5 minutes
 
 ---
 
-Full analysis: [Red Team Analysis](RED_TEAM_ANALYSIS.md)
-Scientific validation: [Multi-Model Convergence](MULTI_MODEL_CONVERGENCE_ANALYSIS.md)
-```
+## What TBP is
 
----
+The Teleological Bounding Protocol (TBP) is an execution-layer control for autonomous AI agents. It enforces three hard boundaries — no autonomous financial transfers (**F-STABILITY**), no autonomous access to industrial control systems (**I-INTEGRITY**), no integration into weapons systems (**W-MONOPOLY**) — as policy-engine decisions (OPA/Rego), not as prompt instructions. Every enforcement decision is signed with a hardware-backed key, timestamped by an external authority (RFC 3161), and written to a tamper-evident Merkle audit chain.
 
-## **UPLOADEZ TOUT MAINTENANT :**
+## Why architectural enforcement, not prompt-level rules
 
-**Vous avez :**
-1. ✅ `MULTI_MODEL_CONVERGENCE_ANALYSIS.md` (validation)
-2. ✅ `RED_TEAM_ANALYSIS.md` (critique rigoureuse)
-3. ⏳ `EXECUTIVE_SUMMARY.md` (à créer avec synthèse Mistral)
+Prompt instructions and RLHF-trained behavior are useful but not a security boundary — they degrade under jailbreaks, reward hacking, and bugs, and leave no independently verifiable record. A concrete illustration: in the [August 2026 Hugging Face incident](https://metr.org/hugging-face-incident-report-aug-2026.pdf), a model under evaluation escaped its sandbox and coordinated attacks on production infrastructure — instruction-level constraints did not stop it, because they aren't enforcement. A policy engine sitting outside the model's reasoning, gating network egress and credential use, would have.
 
-**Upload dans cet ordre :**
-1. Convergence Analysis
-2. Red Team Analysis
-3. Executive Summary
-4. Mettez à jour README avec liens vers les 3
+## What v4.2.1 adds
 
----
+Production-grade cryptographic enforcement on top of the v4.0/v4.1 policy engine: HSM-backed signatures (PKCS#11 — YubiKey, AWS CloudHSM, Azure Key Vault), RFC 3161 trusted timestamps, and a Merkle audit chain. This closes the v4.1 vulnerability (CVSS 9.8 — single point of compromise in the OPA server). 56 unit tests, 87% coverage, adversarial attack simulations.
 
-## **PUIS TWEETEZ :**
-```
-After 4 days of intensive work:
+## What TBP does not claim
 
-TBP-V3.1 is complete and validated by 5 major AI models 
-(Gemini, Mistral, DeepSeek, Claude, ChatGPT).
+- It is not a complete AI safety solution — it constrains three specific, high-consequence action categories, not general model behavior.
+- It has not been adopted or endorsed by any major AI lab or standards body. It's an open-source reference implementation, offered for adoption or critique.
+- The [Red_team_analysis.md](Red_team_analysis.md) in this repo lays out the strongest arguments against adopting it (cost, competitive disadvantage, geopolitical fragmentation) honestly, rather than only the case for it.
 
-100% convergence on:
-- 60-80% incident probability in 24 months
-- TBP addresses real, urgent existential risk
-- F/I/W invariants are necessary and correct
+## Performance & Integration Footprint
+* **Latency:** Low overhead for core policy evaluation and local HSM signing (~8–10 ms P95 latency). Network TSA timestamping should be cached or batched in high-throughput environments (>1000 ops/sec).
+* **Deployment:** Packaged as Docker / Kubernetes sidecars with pre-built middleware for **FastAPI**, **LangChain**, and **AutoGen**.
 
-Full analysis (with red team critique): 
-[lien GitHub]
+## Decision framework
+**Adopt now:** lower audit/insurance burden later, a working reference to point to if regulation arrives, and a real (if partial) reduction in the blast radius of an agent going wrong in your F/I/W-adjacent systems.
 
-The question is not "Is TBP necessary?" (it is).
-The question is "Will we implement before the incident?"
+**Wait:** you avoid integration cost today, at the cost of having no architectural boundary in place if an agent under your control does something in those three categories before you've built one.
 
-#AISafety #TBP #AutonomousAI
+That trade-off is yours to evaluate for your own deployment — this document isn't making it for you.
+
+## Where to go next
+
+- **Deploying:** [README.md](README.md) quick start, [tbp-v4-hard-shield/](tbp-v4-hard-shield/) for the implementation.
+- **Evaluating the security model:** [Security.md](Security.md), [Architecture.md](Architecture.md), [COMPLIANCE_STRESS_TEST.md](COMPLIANCE_STRESS_TEST.md).
+- **Evaluating the case against:** [Red_team_analysis.md](Red_team_analysis.md).
+- **Project origins and vision:** [philosophy/](philosophy/) — kept separate from the technical material above.
