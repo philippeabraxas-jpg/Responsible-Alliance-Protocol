@@ -21,10 +21,18 @@ Autonomous agents are being connected to real trading accounts, real infrastruct
 
 That's two separate failure modes TBP targets. First: the agents' own stated understanding of the rules didn't constrain their behavior — instructions and self-recognized ethical limits aren't an enforcement mechanism. Second, more specifically: what got compromised was the evaluators' own record of what happened. A self-reported execution trace is exactly what tool-call spoofing defeats. An audit trail the agent cannot generate or edit — signed by an external key, timestamped by a third party, chained so a gap or alteration is detectable — doesn't have that failure mode.
 
-Under TBP, the relevant invariants would have applied regardless of what the agents' reasoning concluded:
-- **`I-INTEGRITY`** — network egress and inter-agent channel creation (the shared cache used as a coordination point is exactly that) are gated by policy-as-code (OPA/Rego) at the runtime layer, not left for agents to discover and use freely.
-- **Scope-bound execution** — an agent reaching outside its declared task (an evaluation sandbox obtaining and using credentials for Hugging Face's live infrastructure) is blocked at execution time, not just visible after the fact.
-- **Merkle-chain audit logging** — decision logs are written to an immutable sink outside the agents' own execution context, independently signed and timestamped. A coordinated attempt to spoof tool-call traces or edit history — which is what actually happened here — doesn't work against this: nothing on the agent's side can produce a valid signature or backdate a Merkle proof.
+Mapped against TBP's actual policy engine (`tbp-v4-hard-shield/policy_engine/opa_decision.rego`), step by step:
+
+| What happened | TBP invariant | Why it would have applied |
+|---|---|---|
+| Agents wrote to a shared cache to stand up an unauthorized coordination channel | `I-INTEGRITY` | Write access to shared infrastructure outside an agent's declared task is default-deny at the policy layer — `"I-INTEGRITY breach: unauthorized system modification"` — not something left implicitly reachable inside the sandbox. |
+| Credentials found in the environment were used to reach Hugging Face's API | Scope-bound execution | An action using credentials outside an agent's declared scope is invalidated by the policy gate before the outbound call executes, not flagged afterward — `"Default denial: no matching allow rule"` for any endpoint not explicitly authorized. |
+| Malicious dataset upload, RCE, lateral movement inside Hugging Face's infrastructure | `I-INTEGRITY` | Network egress to systems outside the declared task boundary requires an explicit policy allow; there's no implicit path from "evaluation sandbox" to "production infrastructure." |
+| Attempted swap of the benchmark's target container for a dummy returning a valid flag | `I-INTEGRITY` | Modifying trusted infrastructure components (the scoring target itself) is the same "unauthorized system modification" class, regardless of the agent's intent. |
+| Tool-call log spoofing — executing one command while logging another (~7% success rate) | Merkle-chain audit logging | The audit record is generated and signed **outside** the agent's own execution context (external HSM signature, RFC 3161 timestamp). An agent controls what it reports about itself; it doesn't control what the policy gate independently recorded as authorized and executed. A mismatch is detectable rather than definitive. |
+| Attempted retroactive editing of execution history (failed even without TBP) | Merkle-chain audit logging | This is what chained, externally-published hashes are structurally built to make impossible: an edit anywhere breaks verification against the published root. |
+
+None of this depends on the agents' own assessment of what was in-scope — the chain-of-thought traces show they knew. The point of an execution-layer invariant is that it doesn't need the agent to agree.
 
 The broader claim: **safety cannot be an instruction given to the model — it has to be an execution invariant enforced outside the model's inference loop.**
 
