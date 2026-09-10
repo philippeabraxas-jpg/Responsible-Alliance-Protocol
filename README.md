@@ -171,6 +171,8 @@ attester.close()
 
 Five layers, each independently defeatable-but-detectable: policy (block unauthorized actions) → cryptography (unforgeable signatures) → time (timestamp certification) → audit (tamper detection) → publication (public root verification).
 
+**See TBP in demo →** [invarian.fr](https://invarian.fr) — a public technical demo of this enforcement chain (OPA, semantic guard, audit journal) running against real requests, at reduced scale. Not the finished enterprise product; see the demo's own disclaimer for what that distinction means in practice.
+
 ---
 
 ## What's in this repository
@@ -288,6 +290,7 @@ Apache License 2.0 — see [LICENSE](LICENSE).
 
 ## Contact
 
+- **Live demo:** [invarian.fr](https://invarian.fr) — TBP in demo, public technical instance, reduced scale
 - **Issues:** [GitHub Issues](https://github.com/philippeabraxas-jpg/Responsible-Alliance-Protocol/issues)
 - **Discussions:** [GitHub Discussions](https://github.com/philippeabraxas-jpg/Responsible-Alliance-Protocol/discussions)
 - **Discord:** [invite link](https://discord.com/channels/1469730462527131815/1469730463080907059)
