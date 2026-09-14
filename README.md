@@ -262,6 +262,7 @@ Threat model, response timelines, and responsible-disclosure process: see [Secur
 **Docker Compose:** `cd tbp-v4-hard-shield && docker-compose up -d`
 **Kubernetes:** `kubectl apply -f tbp-v4-hard-shield/deployment/kubernetes/`
 **Cloud:** AWS/Azure/GCP guides in progress — see [tbp-v4-hard-shield/DEPLOYMENT.md](tbp-v4-hard-shield/DEPLOYMENT.md).
+**Network-level rollout:** migration of TBP to enterprise/WWW-scale networks (NAC, PEP, cell registry, inter-entity handshake) — in progress, see [TBP-NETWORK](https://github.com/philippeabraxas-jpg/TBP-NETWORK).
 
 ---
 
