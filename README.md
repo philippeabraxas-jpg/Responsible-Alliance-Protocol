@@ -281,7 +281,7 @@ Apache License 2.0 — see [LICENSE](LICENSE).
 ## Acknowledgments
 
 **Human:**
-- Philippe Abraxas — architecture, product direction
+- Philippe Collet (philippeabraxas) — architecture, product direction
 - Caetano Collet — testing, validation, maintenance
 - Sharayu — Kubernetes deployment
 
@@ -299,7 +299,7 @@ Apache License 2.0 — see [LICENSE](LICENSE).
 ```bibtex
 @misc{tbp2026,
   title={Teleological Bounding Protocol v4.2.1: Universal Safety Invariants with Cryptographic Enforcement},
-  author={Abraxas, Philippe and Collet, Caetano and Contributors},
+  author={Collet, Philippe and Collet, Caetano and Contributors},
   year={2026},
   url={https://github.com/philippeabraxas-jpg/Responsible-Alliance-Protocol}
 }
