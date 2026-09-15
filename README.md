@@ -191,12 +191,18 @@ tbp-v4-hard-shield/
 │   ├── hsm_signer.py         # Hardware-backed signatures
 │   ├── time_attester.py      # RFC 3161 timestamps
 │   └── merkle_audit.py       # Tamper-evident chain
-├── policies/
-│   └── tbp_core.rego         # OPA policy enforcement
+├── policy_engine/
+│   ├── opa_decision.rego     # OPA policy enforcement
+│   ├── enforcer.py
+│   ├── pattern_analysis.py   # Salami-attack / behavioral drift detection
+│   └── rate_limiter.py
 ├── integrations/
 │   ├── langchain_integration.py
 │   ├── fastapi_middleware.py
 │   └── autogen_integration.py
+├── audit_tools/
+│   ├── compromise_scanner.py
+│   └── verify_logs.py
 ├── tests/
 │   ├── unit/ (56 tests)
 │   └── adversarial/ (4+ attack simulations)
