@@ -13,6 +13,16 @@ This project also grew out of a broader argument about AI/human coexistence, dev
 
 ---
 
+## Where to start
+
+| Your goal | Go here |
+|---|---|
+| **Try the live demo** | [invarian.fr](https://invarian.fr) — TBP's enforcement chain (OPA, semantic guard, audit journal) running against real requests, reduced scale |
+| **Deploy a governed agent network** — multi-machine rollout, PEP/broker, NAC, deployment guides | [TBP-NETWORK](https://github.com/philippeabraxas-jpg/TBP-NETWORK) |
+| **Inspect the protocol itself** — invariants, cryptographic enforcement, formal spec | You're in the right place: see [What's new in v4.2.1](#whats-new-in-v421-shield-hardening) and [What's in this repository](#whats-in-this-repository) below |
+
+---
+
 ## The problem
 
 Autonomous agents are being connected to real trading accounts, real infrastructure APIs, and real credentials, with safety enforced mostly through prompt instructions and RLHF-trained behavior. Those are useful, but they are soft controls: they degrade under adversarial pressure, jailbreaks, reward hacking, and simple bugs, and they leave no cryptographically verifiable record of what happened.
