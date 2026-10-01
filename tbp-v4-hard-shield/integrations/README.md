@@ -217,6 +217,11 @@ def read_file(path: str):
 
 def write_file(path: str, content: str):
     """Write content to a file"""
+    # ILLUSTRATION ONLY — do not copy. This opens the received path as-is: `..`
+    # or a symlink inside the workspace walks out of it, and a TBP "allow" does not
+    # make this function safe (TBP decides, it never confines execution). Open
+    # beneath a confined root instead, from an isolated executor — see
+    # deploy/execution-sandbox.md in the TBP-NETWORK repository (issue #180).
     with open(path, 'w') as f:
         f.write(content)
     return {"status": "written", "path": path}
