@@ -1,3 +1,5 @@
+This folder has no place in this repo, but the founder don't want to erase it. It's a testimony of the genesis of the tougths wo make the TBP protocol as an evidence. Nothing in this directory is to consider to judge the protocol himself. Just don't read it, or take it for what is: a story. (and a story is often making a path for whose who want to discover something).
+
 # Philosophy & Origins
 
 This folder holds the vision, narrative, and genesis material behind the Teleological Bounding Protocol (TBP). It is kept separate from the technical specification and implementation on purpose.
