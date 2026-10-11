@@ -1,7 +1,7 @@
 This folder has no place in this repo, but the founder don't want to erase it. It's a testimony of the genesis of the tougths who makes the TBP protocol an evidence. Nothing in this directory is to consider to judge the protocol himself. Just don't read it, or take it for what is: a story. (and a story is often the start of a path for whose who want to discover something).
 
 # Philosophy & Origins
-
+This project also grew out of a broader argument about AI/human coexistence, developed collaboratively with several AI assistants as drafting partners. That vision and origin story lives in this directory, kept separate from the technical material.
 This folder holds the vision, narrative, and genesis material behind the Teleological Bounding Protocol (TBP). It is kept separate from the technical specification and implementation on purpose.
 
 **What's in here is not evidence.** It's the thinking, dialogue, and framing that led to the F/I/W invariants — useful for understanding *why* this project exists and *how* it was built, not for judging whether the enforcement mechanism works. For the technical spec, threat model, and code, start at the [root README](../README.md).
