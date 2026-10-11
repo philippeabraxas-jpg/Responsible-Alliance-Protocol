@@ -1,4 +1,4 @@
-This folder has no place in this repo, but the founder don't want to erase it. It's a testimony of the genesis of the tougths wo make the TBP protocol as an evidence. Nothing in this directory is to consider to judge the protocol himself. Just don't read it, or take it for what is: a story. (and a story is often making a path for whose who want to discover something).
+This folder has no place in this repo, but the founder don't want to erase it. It's a testimony of the genesis of the tougths who makes the TBP protocol an evidence. Nothing in this directory is to consider to judge the protocol himself. Just don't read it, or take it for what is: a story. (and a story is often making a path for whose who want to discover something).
 
 # Philosophy & Origins
 
