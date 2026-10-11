@@ -9,8 +9,6 @@
 
 TBP blocks specific classes of agent action — autonomous financial transfers, industrial-control-system access, weapons-system integration — at the execution layer, outside the model's own reasoning. Decisions are signed (HSM-backed), timestamped (RFC 3161), and written to a tamper-evident Merkle audit chain. The premise: instructions inside a prompt or a system message are not a security boundary, because nothing stops a sufficiently capable or manipulated agent from ignoring them. A boundary enforced by a policy engine sitting between the agent and the outside world is.
 
-This project also grew out of a broader argument about AI/human coexistence, developed collaboratively with several AI assistants as drafting partners. That vision and origin story lives in **[philosophy/](philosophy/)**, kept separate from the technical material below so the engineering can be evaluated on its own terms.
-
 ---
 
 ## Where to start
